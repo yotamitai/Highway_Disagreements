@@ -17,10 +17,9 @@ import gym
 import highway_env
 import numpy as np
 
-from stable_baselines import HER, SAC, DDPG, TD3
-from stable_baselines.ddpg import NormalActionNoise
+from stable_baselines import HER, SAC
 
-env = gym.make("parking-v0")
+env = gym.make("highway-v0")
 
 # Create 4 artificial transitions per real transition
 n_sampled_goal = 4

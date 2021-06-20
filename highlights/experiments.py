@@ -1,4 +1,6 @@
 import argparse
+from os.path import abspath
+
 from get_highlights import get_highlights
 
 if __name__ == '__main__':
@@ -15,7 +17,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """agent parameters"""
-    args.results_dir = '/home/yotama/Local_Git/InterestingnessXRL/Highlights/results'
+    args.results_dir = abspath('results')
     args.num_episodes = 1  # max 2000 (defined in configuration.py)
     args.fps = 2
     args.verbose = True
@@ -40,6 +42,6 @@ if __name__ == '__main__':
 
     """Experiments"""
     for agent in ['Expert', 'LimitedVision', 'HighVision', 'Novice', 'FearWater']:
-        args.agent_dir = '/home/yotama/Local_Git/InterestingnessXRL/Agent_Comparisons/agents/' + agent
+        args.agent_dir = abspath('agents/' + agent)
         args.name = agent
         get_highlights(args)

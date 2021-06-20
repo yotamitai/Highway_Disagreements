@@ -4,11 +4,11 @@ import random
 
 import gym
 import pandas as pd
-from os.path import join, basename
+from os.path import join, basename, abspath
 
 from get_agent import get_agent
 from get_traces import get_traces
-from utils import create_video, make_clean_dirs, pickle_save
+from highlights.utils import create_video, make_clean_dirs, pickle_save
 from highlights_state_selection import compute_states_importance, highlights, highlights_div
 from get_trajectories import states_to_trajectories, trajectories_by_importance, \
     get_trajectory_images
@@ -16,13 +16,12 @@ from ffmpeg import merge_and_fade
 
 
 def get_highlights(args):
-    args.output_dir = join(args.results_dir, '_'.join(
-        [basename(args.agent_dir), datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
+    args.output_dir = join(abspath('results'), '_'.join(
+        [args.name, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
     make_clean_dirs(args.output_dir)
 
     env, agent, agent_args = get_agent(args)
-    [env.reset() for _ in range(5)]
-    traces, states = get_traces(env, agent, agent_args, args)
+    traces, states = get_traces(env, agent, agent_args, abspath('results'), args)
 
     """highlights algorithm"""
     data = {
@@ -32,8 +31,7 @@ def get_highlights(args):
     q_values_df = pd.DataFrame(data)
 
     """importance by state"""
-    q_values_df = compute_states_importance(q_values_df, compare_to=args.state_importance)
-    highlights_df = q_values_df
+    highlights_df = compute_states_importance(q_values_df, compare_to=args.state_importance)
     state_importance_dict = dict(zip(highlights_df["state"], highlights_df["importance"]))
 
     """get highlights"""
@@ -84,25 +82,45 @@ def get_highlights(args):
     if args.verbose: print(f"Highlights {15 * '-' + '>'} Run Configurations Saved")
 
     env.close()
-    del gym.envs.registration.registry.env_specs[env.spec.id]
+    # del gym.envs.registration.registry.env_specs[env.spec.id]
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='RL Agent runner')
-    parser.add_argument('-n', '--num_episodes', help='number of episodes to run', type=int,
-                        default=100)
-    parser.add_argument('-o', '--output', help='directory in which to store results')
-    parser.add_argument('-a', '--agent_dir', help='directory from which to load the agent')
-    parser.add_argument('-c', '--config_file_path', help='path to config file')
-    parser.add_argument('-rv', '--record', help='record videos according to linear schedule',
-                        action='store_true')
+    parser = argparse.ArgumentParser(description='HIGHLIGHTS')
+    parser.add_argument('-a', '--name', help='agent name', type=str, default="Agent-0")
+    parser.add_argument('-num_ep', '--num_episodes', help='number of episodes to run', type=int,
+                        default=1)
+    parser.add_argument('-fps', '--fps', help='summary video fps', type=int, default=1)
+    parser.add_argument('-n', '--n_traces', help='number of traces to obtain', type=int,
+                        default=10)
+    parser.add_argument('-k', '--num_trajectories',
+                        help='number of highlights trajectories to obtain', type=int, default=5)
+    parser.add_argument('-l', '--trajectory_length',
+                        help='length of highlights trajectories ', type=int, default=10)
     parser.add_argument('-v', '--verbose', help='print information to the console',
                         action='store_true')
+    parser.add_argument('-overlapLim', '--overlay_limit', help='# overlaping', type=int,
+                        default=3)
+    parser.add_argument('-minGap', '--minimum_gap', help='minimum gap between trajectories',
+                        type=int, default=0)
+    parser.add_argument('-rand', '--randomized', help='randomize order of summary trajectories',
+                        type=bool, default=True)
+    parser.add_argument('-impMeth', '--importance_type',
+                        help='importance by state or trajectory', default='single_state')
+    parser.add_argument('-impState', '--state_importance',
+                        help='method calculating state importance', default='second')
+    parser.add_argument('-loadTrace', '--load_last_traces',
+                        help='load previously generated traces', type=bool, default=False)
+    parser.add_argument('-loadTraj', '--load_last_trajectories',
+                        help='load previously generated trajectories', type=bool, default=False)
     args = parser.parse_args()
 
     """agent parameters"""
-    args.agent_dir = '/home/yotama/Local_Git/InterestingnessXRL/Agent_Comparisons/agents/Expert_Mid'
-    args.results_dir = '/home/yotama/Local_Git/InterestingnessXRL/Highlights/results'
+    args.agent_config = {
+        # "__class__": "<class 'rl_agents.agents.simple.open_loop.OpenLoopAgent'>",
+        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+        "gamma": 0.7,
+    }
     args.num_episodes = 1  # max 2000 (defined in configuration.py)
     args.fps = 2
     args.verbose = True
@@ -126,5 +144,5 @@ if __name__ == '__main__':
     args.randomized = True
 
     # RUN
-    args.name = basename(args.agent_dir)
+    args.name = args.agent_config["__class__"].split('.')[-1][:-2]
     get_highlights(args)
