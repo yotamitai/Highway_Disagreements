@@ -17,7 +17,7 @@ from ffmpeg import merge_and_fade
 
 def get_highlights(args):
     args.output_dir = join(abspath('results'), '_'.join(
-        [args.name, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
+        [args.id, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
     make_clean_dirs(args.output_dir)
 
     env, agent, agent_args = get_agent(args)
@@ -73,7 +73,7 @@ def get_highlights(args):
     """Merge Highlights to a single video with fade in/ fade out effects"""
     fade_out_frame = args.trajectory_length - args.fade_duration
     merge_and_fade(videos_dir, args.num_trajectories, fade_out_frame, args.fade_duration,
-                   args.name)
+                   args.id)
 
     """Save data used for this run"""
     pickle_save(traces, join(args.output_dir, 'Traces.pkl'))

@@ -1,11 +1,9 @@
 
 import sys
-import os
 
 import gym
 
 from rl_agents.agents.common.factory import agent_factory
-from envs.highway_env_local import LocalHighwayEnv
 
 sys.path.insert(0,'/data/home/yael123/highway/highway-env/scripts/')
 rl_agents_dir = '/data/home/yael123/highway/rl-agents/'

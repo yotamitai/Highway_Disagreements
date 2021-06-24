@@ -1,5 +1,5 @@
 from rl_agents.agents.common.factory import agent_factory
-from envs.highway_env_local import LocalHighwayEnv
+from highway_disagreements.envs.highway_env_local import LocalHighwayEnv
 
 def get_agent(args):
     """Implement here for specific agent and environment loading scheme"""

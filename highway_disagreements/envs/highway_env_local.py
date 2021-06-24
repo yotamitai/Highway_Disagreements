@@ -109,7 +109,7 @@ class LocalHighwayEnv(AbstractEnv):
         return float(self.vehicle.crashed)
 
 
-# register(
-#     id='highway-v0',
-#     entry_point='highway_env.envs:HighwayEnv',
-# )
+register(
+    id='highway_local-v0',
+    entry_point='highway_disagreements.envs.highway_env_local:LocalHighwayEnv',
+)
