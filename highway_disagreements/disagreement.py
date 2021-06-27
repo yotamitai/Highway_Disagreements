@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.special import softmax
 from get_trajectories import trajectory_importance_max_min, \
     trajectory_importance_max_avg, trajectory_importance_avg, trajectory_importance_avg_delta
-from highway_disagreements.utils import save_image, create_video, make_clean_dirs
+from highway_disagreements.utils import save_image, create_video, make_clean_dirs, log
 
 
 class DisagreementTrace(object):
@@ -60,13 +60,20 @@ class DisagreementTrace(object):
             a1_traj_indexes = [x.id[1] for x in a1_traj]
             a2_traj_indexes = list(range(start_idx, end_idx + 1))
             dt = DisagreementTrajectory(self.disagreement_indexes[i], a1_traj_indexes,
-                                        a2_traj_indexes, self.trajectory_length, self.episode,
+                                        a2_traj_indexes, self.trajectory_length, self.episode, i,
                                         a1_traj_q_values, a2_traj_q_values,
                                         self.a1_values_for_a2_states[i],
                                         self.a2_values_for_a1_states[start_idx:end_idx + 1],
                                         self.agent_ratio)
             self.a1_trajectory_indexes.append(a1_traj_indexes)
             self.disagreement_trajectories.append(dt)
+
+    def get_frames(self, s1_indxes, s2_indxes, s2_traj):
+        a1_frames = [self.states[x-min(s1_indxes)].image for x in s1_indxes]
+        a2_frames = [self.a2_trajectories[s2_traj][x-min(s2_indxes)].image for x in s2_indxes]
+        assert len(a1_frames) == self.trajectory_length, 'Error in highlight frame length'
+        assert len(a2_frames) == self.trajectory_length, 'Error in highlight frame length'
+        return a1_frames, a2_frames
 
 
 class State(object):
@@ -88,11 +95,12 @@ class State(object):
 
 
 class DisagreementTrajectory(object):
-    def __init__(self, da_index, a1_states, a2_states, horizon, episode, a1_s_a_values,
+    def __init__(self, da_index, a1_states, a2_states, horizon, episode, i, a1_s_a_values,
                  a2_s_a_values, a1_values_for_a2_states, a2_values_for_a1_states, agent_ratio):
         self.a1_states = a1_states
         self.a2_states = a2_states
         self.episode = episode
+        self.trajectory_index = i
         self.horizon = horizon
         self.da_index = da_index
         self.disagreement_score = None
@@ -110,21 +118,25 @@ class DisagreementTrajectory(object):
             "avg_delta": trajectory_importance_max_min,
         }
 
-    def calculate_state_importance(self, s1, s2, importance):
-        return self.calculate_disagreement_score(s1, s2, importance)
+    def calculate_state_importance(self, importance):
+        self.state_importance = importance
+        da_idx = self.da_index
+        traj_da_idx = self.a1_states.index(da_idx)
+        return self.state_disagreement_score(self.a1_s_a_values[traj_da_idx],
+                                             self.a2_s_a_values[traj_da_idx], importance)
 
-    def calculate_trajectory_importance(self, trajectory_importance, state_importance, a1_states,
-                                        a2_states):
+    def calculate_trajectory_importance(self, trace, i, trajectory_importance, state_importance):
         """calculate trajectory score"""
+        s_i, e_i = min(self.a1_states), max(self.a1_states) + 1
+        a1_states, a2_states = trace.states[s_i: e_i], trace.a2_trajectories[i]
         self.trajectory_importance = trajectory_importance
         self.state_importance = state_importance
         if trajectory_importance == "last_state":
             return self.trajectory_importance_last_state(a1_states[-1], a2_states[-1])
         else:
-            return self.get_trajectory_importance(a1_states, a2_states, trajectory_importance,
-                                                  state_importance)
+            return self.get_trajectory_importance(trajectory_importance, state_importance)
 
-    def get_trajectory_importance(self, s1, s2, trajectory_importance, state_importance):
+    def get_trajectory_importance(self, trajectory_importance, state_importance):
         """state values"""
         s1_a1_vals = self.a1_s_a_values
         s1_a2_vals = self.a2_values_for_a1_states
@@ -133,10 +145,10 @@ class DisagreementTrajectory(object):
         """calculate value of all individual states in both trajectories,
          as ranked by both agents"""
         traj1_importance_of_states = [
-            self.calculate_state_importance(s1_a1_vals[i], s1_a2_vals[i], state_importance) for i
+            self.state_disagreement_score(s1_a1_vals[i], s1_a2_vals[i], state_importance) for i
             in range(len(s1_a1_vals))]
         traj2_importance_of_states = [
-            self.calculate_state_importance(s2_a1_vals[i], s2_a2_vals[i], state_importance) for i
+            self.state_disagreement_score(s2_a1_vals[i], s2_a2_vals[i], state_importance) for i
             in range(len(s2_a2_vals))]
         """calculate score of trajectories"""
         traj1_score = self.importance_funcs[trajectory_importance](traj1_importance_of_states)
@@ -169,21 +181,16 @@ class DisagreementTrajectory(object):
         a2_diff = max(a2_vals) - a2_vals[np.argmax(a1_vals)]
         return a1_diff + a2_diff
 
-    def calculate_disagreement_score(self, s1_vals, s2_vals, importance):
-        a1_vals = softmax(s1_vals)
-        a2_vals = softmax(s2_vals)
+    def state_disagreement_score(self, s1_vals, s2_vals, importance):
+        # softmax trick to prevent overflow and underflow
+        new_s1_vals = s1_vals - s1_vals.max()
+        new_s2_vals = s2_vals - s2_vals.max()
+        a1_vals = softmax(new_s1_vals)
+        a2_vals = softmax(new_s2_vals)
         if importance == 'sb':
             return self.second_best_confidence(a1_vals, a2_vals)
         elif importance == 'bety':
             return self.better_than_you_confidence(a1_vals, a2_vals)
-
-    def get_frames(self):
-        a1_frames = [x.image for x in self.a1_states]
-        a2_frames = [x.image for x in self.a2_states]
-        if len(a1_frames) != self.horizon:
-            a1_frames = a1_frames + [a1_frames[-1] for _ in range(self.horizon - len(a1_frames))]
-            a2_frames = a2_frames + [a2_frames[-1] for _ in range(self.horizon - len(a2_frames))]
-        return a1_frames, a2_frames
 
 
 def disagreement(timestep, trace, env2, a2, curr_s, a1):
@@ -260,28 +267,17 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
 
 
 def get_top_k_disagreements(traces, args):
-    """"""
-    top_k_diverse_trajectories, discarded_context, discarded_importance = [], [], []
-    """get diverse trajectories"""
+    """obtain the N-most important trajectories"""
+    top_k_diverse_trajectories, discarded_context = [], []
+    """get all trajectories"""
     all_trajectories = []
     for trace in traces:
         all_trajectories += [t for t in trace.disagreement_trajectories]
     sorted_trajectories = sorted(all_trajectories, key=lambda x: x.importance, reverse=True)
-
-    seen_importance = []
+    """select trajectories"""
     seen_indexes = {i: [] for i in range(len(traces))}
     for t in sorted_trajectories:
-        """last_state_loc: specific distances"""
-        if args.trajectory_importance == "last_state_loc":
-            if t.importance == 429: continue
-        """last_state_val"""
-        if args.trajectory_importance == "last_state_val":
-            if t.states[-2].state == t.a2_states[-2].state:
-                continue
-            if t.a1_states[-1].state == 1036 or t.a2_states[-1].state == 1036:
-                continue
-
-        t_indexes = [s.id for s in t.a1_states]
+        t_indexes = t.a1_states
         intersecting_indexes = set(seen_indexes[t.episode]).intersection(set(t_indexes))
         if len(intersecting_indexes) > args.similarity_limit:
             discarded_context.append(t)
@@ -293,21 +289,21 @@ def get_top_k_disagreements(traces, args):
 
     if not len(top_k_diverse_trajectories) == args.n_disagreements:
         top_k_diverse_trajectories += discarded_context
-    if not len(top_k_diverse_trajectories) == args.n_disagreements:
-        top_k_diverse_trajectories += discarded_importance
-    for i in range(args.n_disagreements - len(top_k_diverse_trajectories)):
-        top_k_diverse_trajectories.append(discarded_context[i])
     top_k_diverse_trajectories = top_k_diverse_trajectories[:args.n_disagreements]
-    logging.info(f'Chosen disagreements:')
+
+    log(f'Chosen disagreements:')
     for d in top_k_diverse_trajectories:
-        logging.info(f'Name: {d.a1_states[(args.horizon // 2) - 1].id}, '
-                     f'State: {d.a1_states[(args.horizon // 2) - 1].state} '
-                     f'Position: {d.a1_states[(args.horizon // 2) - 1].agent_position}')
+        log(f'Name: ({d.episode},{d.da_index})')
 
     """make all trajectories the same length"""
     for t in top_k_diverse_trajectories:
         if len(t.a1_states) < args.horizon:
+            da_traj_idx = t.a1_states.index(t.da_index)
+            for _ in range((args.horizon // 2) - da_traj_idx - 1):
+                t.a1_states.insert(0, t.a1_states[0])
+                t.a2_states.insert(0, t.a1_states[0])
             for _ in range(args.horizon - len(t.a1_states)):
-                t.a1_states += [t.a1_states[-1]]
-                t.a2_states += [t.a2_states[-1]]
+                t.a1_states.append(t.a1_states[-1])
+            for _ in range(args.horizon - len(t.a2_states)):
+                t.a2_states.append(t.a2_states[-1])
     return top_k_diverse_trajectories

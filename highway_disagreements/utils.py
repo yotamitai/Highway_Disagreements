@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import shutil
 import pickle
@@ -9,6 +10,10 @@ import gym
 from gym.wrappers import Monitor
 from skimage import img_as_ubyte
 import imageio
+
+def log(msg, verbose=False):
+    if verbose: print(msg)
+    logging.info(msg)
 
 
 def pickle_load(filename):

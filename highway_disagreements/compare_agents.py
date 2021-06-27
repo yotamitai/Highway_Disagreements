@@ -11,7 +11,7 @@ from disagreement import save_disagreements, get_top_k_disagreements, disagreeme
     DisagreementTrace, State
 from get_agent import get_agent
 from merge_and_fade import merge_and_fade
-from highway_disagreements.utils import mark_agent, pickle_load, pickle_save, make_clean_dirs
+from highway_disagreements.utils import mark_agent, pickle_load, pickle_save, make_clean_dirs, log
 from copy import deepcopy
 
 
@@ -121,21 +121,12 @@ def rank_trajectories(traces, importance_type, state_importance, traj_importance
     for trace in traces:
         for i, trajectory in enumerate(trace.disagreement_trajectories):
             if importance_type == 'state':
-                trajectory.state_importance = state_importance
-                importance = trajectory.calculate_state_importance(state_importance, a1_states[da_index],
-                                                      a2_states[da_index],
-                                                      disagreement_importance, agent_ratio)
+                importance = trajectory.calculate_state_importance(state_importance)
             else:
-                s_i, e_i = min(trajectory.a1_states), max(trajectory.a1_states)+1
-                importance = trajectory.calculate_trajectory_importance(traj_importance, state_importance, trace.states[s_i: e_i],
-                                                           trace.a2_trajectories[i])
+                # TODO check that all importance criteria work
+                importance = trajectory.calculate_trajectory_importance(trace, i, traj_importance,
+                                                                        state_importance)
             trajectory.importance = importance
-            #TODO check that all importance criteria work
-
-
-def log(msg, verbose):
-    if verbose: print(msg)
-    logging.info(msg)
 
 
 def main(args):
@@ -162,22 +153,25 @@ def main(args):
     if args.randomized: random.shuffle(disagreements)
 
     """mark disagreement frames"""
+    # TODO mark agent, needed?
     a1_disagreement_frames, a2_disagreement_frames = [], []
     for d in disagreements:
-        d_state = d.a1_states[(args.horizon // 2) - 1]
-        d_state.image = mark_agent(d_state.image, d_state.agent_position)
-        a1_frames, a2_frames = d.get_frames()
-        for i in range(args.horizon // 2, args.horizon):
-            a1_position = d.a1_states[i].agent_position
-            a2_position = d.a2_states[i].agent_position
-            a1_frames[i] = mark_agent(a1_frames[i], position=a1_position, color=(255, 0,))
-            a2_frames[i] = mark_agent(a2_frames[i], position=a2_position, color=(0, 0, 0))
+        # state_idx = d.a1_states[(args.horizon // 2) - 1]
+        # state = traces[d.episode].states[state_idx]
+        # state.image = mark_agent(state.image, state.position)
+        a1_frames, a2_frames = traces[d.episode].get_frames(d.a1_states, d.a2_states,
+                                                            d.trajectory_index)
+        # for i in range(args.horizon // 2, args.horizon):
+        #     a1_position = d.a1_states[i].agent_position
+        #     a2_position = d.a2_states[i].agent_position
+        #     a1_frames[i] = mark_agent(a1_frames[i], position=a1_position, color=(255, 0,))
+        #     a2_frames[i] = mark_agent(a2_frames[i], position=a2_position, color=(0, 0, 0))
         a1_disagreement_frames.append(a1_frames)
         a2_disagreement_frames.append(a2_frames)
 
     """save disagreement frames"""
-    video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
-                                   args.output_dir, args.fps)
+    video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames, output_dir,
+                                   args.fps)
     log(f'Disagreements saved', args.verbose)
 
     """generate video"""
@@ -187,9 +181,7 @@ def main(args):
     log(f'DAs Video Generated', args.verbose)
 
     """ writes results to files"""
-    a1.save(output_dir)
     log(f'\nResults written to:\n\t\'{output_dir}\'', args.verbose)
-
 
 
 if __name__ == '__main__':
@@ -237,17 +229,17 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    # args.state_importance = "bety"  # "sb" "bety"
-    # args.trajectory_importance = "last_state" # last_state, max_min, max_avg, avg, avg_delta
-    # args.importance_type = 'trajectory'  # state/trajectory
+    args.state_importance = "sb"  # "sb" "bety"
+    args.trajectory_importance = "avg"  # last_state, max_min, max_avg, avg, avg_delta
+    args.importance_type = 'state'  # state/trajectory
 
-    """run params"""
-    args.trajectory_importance = "max_min" # last_state, max_min, max_avg, avg, avg_delta
-    args.num_episodes = 1
+    """"""
+    args.fps = 5
+    args.num_episodes = 3
     args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
     args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
     args.results_dir = abspath('results')
-    args.traces_path = join('results', 'DQNAgent_FTQAgent_24-06_14:43:27')
+    args.traces_path = None #join('results', 'DQNAgent_FTQAgent_27-06_10:11:44')
 
     """RUN"""
     main(args)
