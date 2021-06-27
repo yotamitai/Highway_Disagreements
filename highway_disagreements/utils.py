@@ -3,21 +3,30 @@ import logging
 import os
 import shutil
 import pickle
-from os.path import join, dirname, exists
-
+from os.path import join
 import cv2
-import gym
-from gym.wrappers import Monitor
+
 from skimage import img_as_ubyte
 import imageio
+
 
 def log(msg, verbose=False):
     if verbose: print(msg)
     logging.info(msg)
 
 
+def load_traces(path):
+    return pickle_load(join(path, 'Traces.pkl'))
+
+
+def save_traces(traces, output_dir):
+    os.makedirs(output_dir)
+    pickle_save(traces, join(output_dir, 'Traces.pkl'))
+
+
 def pickle_load(filename):
     return pickle.load(open(filename, "rb"))
+
 
 def pickle_save(obj, path):
     with open(path, "wb") as file:

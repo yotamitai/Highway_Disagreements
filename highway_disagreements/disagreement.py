@@ -6,8 +6,7 @@ import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import softmax
-from get_trajectories import trajectory_importance_max_min, \
-    trajectory_importance_max_avg, trajectory_importance_avg, trajectory_importance_avg_delta
+from get_trajectories import trajectory_importance_max_min
 from highway_disagreements.utils import save_image, create_video, make_clean_dirs, log
 
 
@@ -68,9 +67,9 @@ class DisagreementTrace(object):
             self.a1_trajectory_indexes.append(a1_traj_indexes)
             self.disagreement_trajectories.append(dt)
 
-    def get_frames(self, s1_indxes, s2_indxes, s2_traj):
-        a1_frames = [self.states[x-min(s1_indxes)].image for x in s1_indxes]
-        a2_frames = [self.a2_trajectories[s2_traj][x-min(s2_indxes)].image for x in s2_indxes]
+    def get_frames(self, s1_indexes, s2_indexes, s2_traj):
+        a1_frames = [self.states[x - min(s1_indexes)].image for x in s1_indexes]
+        a2_frames = [self.a2_trajectories[s2_traj][x - min(s2_indexes)].image for x in s2_indexes]
         assert len(a1_frames) == self.trajectory_length, 'Error in highlight frame length'
         assert len(a2_frames) == self.trajectory_length, 'Error in highlight frame length'
         return a1_frames, a2_frames
@@ -240,8 +239,6 @@ def get_pre_disagreement_states(t, horizon, states):
 
 def disagreement_states(trace, env, agent, timestep, curr_s):
     horizon, da_rewards = env.args.horizon, []
-    # obtain last pre-disagreement states
-    # da_states = get_pre_disagreement_states(timestep, horizon, trace.states)
     start = timestep - (horizon // 2) + 1
     if start < 0: start = 0
     da_states = trace.states[start:]
@@ -259,10 +256,6 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
         da_states.append(new_state)
         da_rewards.append(r)
         curr_s = new_s
-
-    # if len(da_states) < horizon:
-    #     da_states += [da_states[-1] for _ in range(horizon - len(da_states))]
-    #     da_rewards += [0 for _ in range(horizon - len(da_states))]
     return da_states, da_rewards
 
 

@@ -6,12 +6,13 @@ from os.path import abspath
 import gym
 from datetime import datetime
 from os.path import join, basename
-from agent_score import asses_agents
+from agent_score import assess_agents
 from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
     DisagreementTrace, State
 from get_agent import get_agent
 from merge_and_fade import merge_and_fade
-from highway_disagreements.utils import mark_agent, pickle_load, pickle_save, make_clean_dirs, log
+from highway_disagreements.utils import mark_agent, pickle_load, pickle_save, make_clean_dirs, \
+    log, load_traces, save_traces
 from copy import deepcopy
 
 
@@ -30,15 +31,11 @@ def get_logging(args):
     return name, file_name
 
 
-def agent_assesment(a1_config, a2_config):
-    agent_ratio, a1_overall, a2_overall = asses_agents(a1_config, a2_config)
+def agent_assessment(a1_config, a2_config):
+    agent_ratio, a1_overall, a2_overall = assess_agents(a1_config, a2_config)
     msg = f'A1 score: {a1_overall}, A2 score: {a2_overall}, agent_ration: {agent_ratio}'
     log(msg, args.verbose)
     return agent_ratio
-
-
-def get_disagreement_traces(args):
-    pass
 
 
 def online_comparison(args):
@@ -54,8 +51,8 @@ def online_comparison(args):
         log(f'Running Episode number: {e}', args.verbose)
         curr_obs, _ = env1.reset(), env2.reset()
         """agent assessment"""
-        agent_ratio = 1 if not args.agent_assesment \
-            else agent_assesment(args.a1_config, args.a2_config)
+        agent_ratio = 1 if not args.agent_assessment \
+            else agent_assessment(args.a1_config, args.a2_config)
         """get initial state"""
         t = 0
         done = False
@@ -108,15 +105,6 @@ def online_comparison(args):
     return traces
 
 
-def load_traces(path):
-    return pickle_load(join(path, 'Traces.pkl'))
-
-
-def save_traces(traces, output_dir):
-    os.makedirs(output_dir)
-    pickle_save(traces, join(output_dir, 'Traces.pkl'))
-
-
 def rank_trajectories(traces, importance_type, state_importance, traj_importance):
     for trace in traces:
         for i, trajectory in enumerate(trace.disagreement_trajectories):
@@ -140,7 +128,6 @@ def main(args):
     save_traces(traces, output_dir)
     log(f'Saved traces', args.verbose)
 
-    # TODO a1 and a2 disagreement trajectories are not of same length. take in consideration
     """rank disagreement trajectories by importance measures"""
     rank_trajectories(traces, args.importance_type, args.state_importance,
                       args.trajectory_importance)

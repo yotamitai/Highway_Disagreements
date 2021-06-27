@@ -3,7 +3,7 @@ import gym
 import numpy as np
 from highway_disagreements.get_agent import get_agent
 
-def asses_agents(a1, a2):
+def assess_agents(a1, a2):
     a1_overall = agent_score(a1)
     a2_overall = agent_score(a2)
     if a1_overall < 0 < a2_overall:
