@@ -29,7 +29,7 @@ class LocalHighwayEnv(AbstractEnv):
             },
             "simulation_frequency": 4,  # [Hz]
             "policy_frequency": 1,  # [Hz]
-            "lanes_count": 2,
+            "lanes_count": 4,
             "vehicles_count": 50,
             "controlled_vehicles": 1,
             "initial_lane_id": None,

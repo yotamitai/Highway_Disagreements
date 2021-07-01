@@ -1,5 +1,5 @@
 import glob
-import logging
+import json
 import os
 import shutil
 import pickle
@@ -10,11 +10,6 @@ from skimage import img_as_ubyte
 import imageio
 
 
-def log(msg, verbose=False):
-    if verbose: print(msg)
-    logging.info(msg)
-
-
 def load_traces(path):
     return pickle_load(join(path, 'Traces.pkl'))
 
@@ -22,6 +17,9 @@ def load_traces(path):
 def save_traces(traces, output_dir):
     os.makedirs(output_dir)
     pickle_save(traces, join(output_dir, 'Traces.pkl'))
+    # TODO save and load as json for reduced space, requires loading scheme for specific classes
+    # from rl_agents.configuration import serialize
+    # json_save([dict(trace=serialize(trace)) for trace in traces], join(output_dir, 'Traces.json'))
 
 
 def pickle_load(filename):
@@ -31,6 +29,11 @@ def pickle_load(filename):
 def pickle_save(obj, path):
     with open(path, "wb") as file:
         pickle.dump(obj, file)
+
+
+def json_save(obj, path):
+    with open(path, 'w') as f:
+        json.dump(obj, f, sort_keys=True, indent=4)
 
 
 def create_video(frame_dir, video_dir, agent_hl, size, length, fps):
@@ -74,16 +77,17 @@ def make_clean_dirs(path, no_clean=False, file_type='', hard=False):
         if not no_clean: clean_dir(path, file_type, hard)
 
 
-def video_schedule(config, videos):
-    # linear capture schedule
-    return (lambda e: True) if videos else \
-        (lambda e: videos and (e == config.num_episodes - 1 or
-                               e % int(config.num_episodes / config.num_recorded_videos) == 0))
-
-
 def mark_agent(img, position=None, color=255, thickness=2):
+    assert position, 'Error - No position provided for marking agent'
     img2 = img.copy()
     top_left = (position[0], position[1])
-    bottom_right = (position[0] + 30, position[1] + 30)
+    bottom_right = (position[0] + 30, position[1] + 15)
     cv2.rectangle(img2, top_left, bottom_right, color, thickness)
     return img2
+
+
+def add_border(image_src, border_thickness=5, color=[0,0,0]):
+    bt = border_thickness
+    x = cv2.copyMakeBorder(image_src, bt, bt, bt, bt, cv2.BORDER_CONSTANT, value=color)
+    cv2.imshow("Image", x)
+    return x

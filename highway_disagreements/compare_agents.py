@@ -1,41 +1,15 @@
 import argparse
-import logging
 import random
-import os
 from os.path import abspath
-import gym
-from datetime import datetime
-from os.path import join, basename
-from agent_score import assess_agents
+from os.path import join
 from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
     DisagreementTrace, State
 from get_agent import get_agent
-from merge_and_fade import merge_and_fade
-from highway_disagreements.utils import mark_agent, pickle_load, pickle_save, make_clean_dirs, \
-    log, load_traces, save_traces
+from highway_disagreements.agent_score import agent_assessment
+from highway_disagreements.logging_info import get_logging, log
+from highway_disagreements.side_by_side import side_by_side_video
+from highway_disagreements.utils import load_traces, save_traces
 from copy import deepcopy
-
-
-def get_logging(args):
-    if not os.path.exists(abspath('logs')):
-        os.makedirs('logs')
-    name = '_'.join([basename(args.a1_name), basename(args.a2_name)])
-    file_name = '_'.join([name, datetime.now().strftime("%d-%m %H:%M:%S").replace(' ', '_')])
-    log_name = join('logs', file_name)
-    args.output = join('results', file_name)
-    logging.basicConfig(filename=log_name + '.log', filemode='w',
-                        format='%(name)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
-    log(f'Comparing Agents: {name}', args.verbose)
-    log(f'Disagreement importance by: {args.importance_type}', args.verbose)
-    return name, file_name
-
-
-def agent_assessment(a1_config, a2_config):
-    agent_ratio, a1_overall, a2_overall = assess_agents(a1_config, a2_config)
-    msg = f'A1 score: {a1_overall}, A2 score: {a2_overall}, agent_ration: {agent_ratio}'
-    log(msg, args.verbose)
-    return agent_ratio
 
 
 def online_comparison(args):
@@ -45,14 +19,15 @@ def online_comparison(args):
     env1.args = args
     env2, a2 = get_agent(args.a2_config, env=deepcopy(env1))
 
+    """agent assessment"""
+    agent_ratio = 1 if not args.agent_assessment else \
+        agent_assessment(args.a1_config, args.a2_config)
+
     """Run"""
     traces = []
     for e in range(args.num_episodes):
         log(f'Running Episode number: {e}', args.verbose)
         curr_obs, _ = env1.reset(), env2.reset()
-        """agent assessment"""
-        agent_ratio = 1 if not args.agent_assessment \
-            else agent_assessment(args.a1_config, args.a2_config)
         """get initial state"""
         t = 0
         done = False
@@ -72,7 +47,6 @@ def online_comparison(args):
             a2_a = a2.act(curr_s)
             """check for disagreement"""
             if a1_a != a2_a:
-                # if True:
                 copy_env2 = deepcopy(env2)
                 log(f'\tDisagreement at step {t}', args.verbose)
                 disagreement(t, trace, env2, a2, curr_s, a1)
@@ -106,6 +80,8 @@ def online_comparison(args):
 
 
 def rank_trajectories(traces, importance_type, state_importance, traj_importance):
+    # TODO check that trajectories are being summed correctly (different lengths)
+    # check that
     for trace in traces:
         for i, trajectory in enumerate(trace.disagreement_trajectories):
             if importance_type == 'state':
@@ -123,7 +99,7 @@ def main(args):
     log(f'Obtained traces', args.verbose)
 
     """save traces"""
-    # TODO
+    # TODO check if json works better than pickle
     output_dir = join(args.results_dir, file_name)
     save_traces(traces, output_dir)
     log(f'Saved traces', args.verbose)
@@ -147,7 +123,8 @@ def main(args):
         # state = traces[d.episode].states[state_idx]
         # state.image = mark_agent(state.image, state.position)
         a1_frames, a2_frames = traces[d.episode].get_frames(d.a1_states, d.a2_states,
-                                                            d.trajectory_index)
+                                                            d.trajectory_index,
+                                                            mark_position=[164, 66])
         # for i in range(args.horizon // 2, args.horizon):
         #     a1_position = d.a1_states[i].agent_position
         #     a2_position = d.a2_states[i].agent_position
@@ -164,7 +141,7 @@ def main(args):
     """generate video"""
     fade_duration = 2
     fade_out_frame = args.horizon - fade_duration
-    merge_and_fade(video_dir, args.n_disagreements, fade_out_frame, name)
+    side_by_side_video(video_dir, args.n_disagreements, fade_out_frame, name)
     log(f'DAs Video Generated', args.verbose)
 
     """ writes results to files"""
@@ -195,9 +172,12 @@ if __name__ == '__main__':
     parser.add_argument('-impState', '--state_importance',
                         help='method calculating state importance', default='bety')
     parser.add_argument('-v', '--verbose', help='print information to the console', default=True)
-    parser.add_argument('-ass', '--agent_assesment', help='apply agent ratio by agent score',
+    parser.add_argument('-ass', '--agent_assessment', help='apply agent ratio by agent score',
                         default=False)
     parser.add_argument('-se', '--seed', help='environment seed', default=0)
+    parser.add_argument('-res', '--results_dir', help='results directory', default='results')
+    parser.add_argument('-tr', '--traces_path', help='path to traces file if exists',
+                        default=None)
     args = parser.parse_args()
 
     """experiment parameters"""
@@ -206,10 +186,11 @@ if __name__ == '__main__':
     }
     args.a2_config = {
         "__class__": "<class 'rl_agents.agents.fitted_q.pytorch.FTQAgent'>",
+        # "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
     }
 
     # args.fps = 1
-    # args.horizon = 10
+
     # args.show_score_bar = False
     # args.n_disagreements = 5
     # args.randomized = True
@@ -221,12 +202,14 @@ if __name__ == '__main__':
     args.importance_type = 'state'  # state/trajectory
 
     """"""
-    args.fps = 5
+    args.horizon = 10
+    args.fps = 2
     args.num_episodes = 3
     args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
     args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
     args.results_dir = abspath('results')
-    args.traces_path = None #join('results', 'DQNAgent_FTQAgent_27-06_10:11:44')
+    # args.traces_path = join('results', 'DQNAgent_FTQAgent_29-06_10:42:33')
+    args.traces_path = None
 
     """RUN"""
     main(args)

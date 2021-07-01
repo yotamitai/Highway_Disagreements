@@ -72,7 +72,7 @@ print(f"Ready to train {agent} on {env}")
 
 """Start training. This should take about an hour."""
 
-#evaluation.train()
+# evaluation.train()
 
 """Progress can be visualised in the tensorboard cell above, which should update every 30s (or manually). You may need to click the *Fit domain to data* buttons below each graph.
 

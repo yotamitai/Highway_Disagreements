@@ -2,7 +2,7 @@
 import sys
 
 import gym
-
+import highway_env
 from rl_agents.agents.common.factory import agent_factory
 
 sys.path.insert(0,'/data/home/yael123/highway/highway-env/scripts/')

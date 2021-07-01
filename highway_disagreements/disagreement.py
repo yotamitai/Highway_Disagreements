@@ -1,14 +1,12 @@
-import logging
-from copy import copy
 from os.path import join
-import gym
-import imageio
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import softmax
 from get_trajectories import trajectory_importance_max_min
-from highway_disagreements.utils import save_image, create_video, make_clean_dirs, log
-
+from highway_disagreements.logging_info import log
+from highway_disagreements.utils import save_image, create_video, make_clean_dirs, mark_agent
+import imageio
 
 class DisagreementTrace(object):
     def __init__(self, episode, trajectory_length, agent_ratio=1):
@@ -67,11 +65,14 @@ class DisagreementTrace(object):
             self.a1_trajectory_indexes.append(a1_traj_indexes)
             self.disagreement_trajectories.append(dt)
 
-    def get_frames(self, s1_indexes, s2_indexes, s2_traj):
-        a1_frames = [self.states[x - min(s1_indexes)].image for x in s1_indexes]
+    def get_frames(self, s1_indexes, s2_indexes, s2_traj, mark_position=None):
+        a1_frames = [self.states[x].image for x in s1_indexes]
         a2_frames = [self.a2_trajectories[s2_traj][x - min(s2_indexes)].image for x in s2_indexes]
         assert len(a1_frames) == self.trajectory_length, 'Error in highlight frame length'
         assert len(a2_frames) == self.trajectory_length, 'Error in highlight frame length'
+        da_index = self.trajectory_length//2 -1
+        a1_frames[da_index] = mark_agent(a1_frames[da_index], position=mark_position)
+        a2_frames[da_index] = a1_frames[da_index]
         return a1_frames, a2_frames
 
 
@@ -243,7 +244,8 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
     if start < 0: start = 0
     da_states = trace.states[start:]
     done = False
-    for step in range(timestep + 1, timestep + (horizon // 2)):
+    next_timestep = timestep+1
+    for step in range(next_timestep, next_timestep + (horizon // 2)):
         if done: break
         a = agent.act(curr_s)
         new_obs, r, done, info = env.step(a)
@@ -269,14 +271,14 @@ def get_top_k_disagreements(traces, args):
     sorted_trajectories = sorted(all_trajectories, key=lambda x: x.importance, reverse=True)
     """select trajectories"""
     seen_indexes = {i: [] for i in range(len(traces))}
-    for t in sorted_trajectories:
-        t_indexes = t.a1_states
-        intersecting_indexes = set(seen_indexes[t.episode]).intersection(set(t_indexes))
+    for d in sorted_trajectories:
+        t_indexes = d.a1_states
+        intersecting_indexes = set(seen_indexes[d.episode]).intersection(set(t_indexes))
         if len(intersecting_indexes) > args.similarity_limit:
-            discarded_context.append(t)
+            discarded_context.append(d)
             continue
-        seen_indexes[t.episode] += t_indexes
-        top_k_diverse_trajectories.append(t)
+        seen_indexes[d.episode] += t_indexes
+        top_k_diverse_trajectories.append(d)
         if len(top_k_diverse_trajectories) == args.n_disagreements:
             break
 
@@ -289,14 +291,21 @@ def get_top_k_disagreements(traces, args):
         log(f'Name: ({d.episode},{d.da_index})')
 
     """make all trajectories the same length"""
-    for t in top_k_diverse_trajectories:
-        if len(t.a1_states) < args.horizon:
-            da_traj_idx = t.a1_states.index(t.da_index)
+    for d in top_k_diverse_trajectories:
+        if len(d.a1_states) < args.horizon:
+            da_traj_idx = d.a1_states.index(d.da_index)
             for _ in range((args.horizon // 2) - da_traj_idx - 1):
-                t.a1_states.insert(0, t.a1_states[0])
-                t.a2_states.insert(0, t.a1_states[0])
-            for _ in range(args.horizon - len(t.a1_states)):
-                t.a1_states.append(t.a1_states[-1])
-            for _ in range(args.horizon - len(t.a2_states)):
-                t.a2_states.append(t.a2_states[-1])
+                d.a1_states.insert(0, d.a1_states[0])
+                d.a2_states.insert(0, d.a1_states[0])
+            """"""
+            while len(d.a1_states) < args.horizon:
+                last_idx = d.a1_states[-1]
+                if last_idx < len(traces[d.episode].states)-1:
+                    last_idx += 1
+                    d.a1_states.append(last_idx)
+                else:
+                    d.a1_states.append(last_idx)
+
+            for _ in range(args.horizon - len(d.a2_states)):
+                d.a2_states.append(d.a2_states[-1])
     return top_k_diverse_trajectories
