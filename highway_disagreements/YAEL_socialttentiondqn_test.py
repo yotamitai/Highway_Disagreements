@@ -19,10 +19,8 @@ from rl_agents.agents.common.factory import load_agent, load_environment
 # agent_config = 'configs/HighwayEnv/agents/DQNAgent/ddqn.json'
 
 env = gym.make('highway-v0')
-#env.config["lanes_count"] = 4
-#env.config["vehicles_count"]=30
-#env.config["vehicles_density"] = 2
-#env.reset()
+env.configure({"offscreen_rendering": True})
+env.reset()
 
 agent_config = {
         # "__class__": "<class 'rl_agents.agents.simple.open_loop.OpenLoopAgent'>",
@@ -30,30 +28,13 @@ agent_config = {
         "gamma": 0.7,
     }
 agent = agent_factory(env, agent_config)
-
-evaluation = Evaluation(env, agent, num_episodes=3000, display_env=False)
-print("NO TRAIN 26/04/2021")
-print("6 lanes")
-print(f"Ready to train {agent} on {env}")
-
-"""Run tensorboard locally to visualize training."""
-
-# Commented out IPython magic to ensure Python compatibility.
-# %tensorboard --logdir "{evaluation.directory}"
+evaluation = Evaluation(env, agent, num_episodes=3000, display_env=False, recover=True)
 
 """Start training. This should take about an hour."""
-
 evaluation.train()
 
-"""Progress can be visualised in the tensorboard cell above, which should update every 30s (or manually). You may need to click the *Fit domain to data* buttons below each graph.
-
-## Testing
-
-Run the learned policy for a few episodes.
-"""
-
-env = load_environment(env_config)
-env.configure({"offscreen_rendering": True})
+# env = load_environment(env_config)
+# env.configure({"offscreen_rendering": True})
 #env.config["lanes_count"] = 4
 #env.config["vehicles_count"]=30
 #env.config["vehicles_density"] = 2
@@ -61,4 +42,4 @@ env.configure({"offscreen_rendering": True})
 agent = load_agent(agent_config, env)
 evaluation = Evaluation(env, agent, num_episodes=3000, recover=True)
 evaluation.test()
-show_videos(evaluation.run_directory)
+# show_videos(evaluation.run_directory)

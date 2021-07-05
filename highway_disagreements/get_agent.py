@@ -1,6 +1,17 @@
+from os.path import abspath
+from pathlib import Path
+
 import gym
 from rl_agents.agents.common.exploration.abstract import exploration_factory
 from rl_agents.agents.common.factory import agent_factory
+from rl_agents.trainer.evaluation import Evaluation
+
+
+class MyEvaluation(Evaluation):
+    def __init__(self, env, agent, output_dir='../agents', num_episodes=1000, display_env=False):
+        self.OUTPUT_FOLDER = output_dir
+        super(MyEvaluation, self).__init__(env, agent, num_episodes=num_episodes,
+                                           display_env=display_env)
 
 
 def get_agent(config, env=None, env_id=None, seed=None, offscreen_rendering=True):
@@ -11,27 +22,15 @@ def get_agent(config, env=None, env_id=None, seed=None, offscreen_rendering=True
         env = gym.make(env_id)
         env.seed(seed)
         env.configure({"offscreen_rendering": offscreen_rendering})
-    # Make agent
+    # config agent agent
     agent = agent_factory(env, config)
     # implement deterministic greedy policy
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
+    # create evaluation
+    evaluation = MyEvaluation(env, agent, display_env=False)
+    agent_path = Path(abspath(config['pretrained_model_path']))
+    # load agent
+    evaluation.load_agent_model(agent_path)
+    agent = evaluation.agent
+
     return env, agent
-
-# def copy_env_agent(env, config, actions=[]):
-#     agent = agent_factory(env, config)
-#     # implement deterministic greedy policy
-#     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
-#     for a in actions:
-#         _ = env.step(a)
-#     return agent
-
-# def reload_agent(e, config, seed, actions):
-#     env, agent = get_agent(config, seed)
-#     # each episode resets the environment.
-#     # each such env is different in randomly generated parts
-#     # so -- to load the same game env there is need to do the same number of resets
-#     [env.reset() for _ in range(e+1)]
-#     #TODO make sure the resulting environment is truely the same as env1.
-#     for a in actions:
-#         _ = env.step(a)
-#     return env, agent

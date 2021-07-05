@@ -1,45 +1,32 @@
+from os.path import abspath
+from pathlib import Path
+
 import gym
 import highway_env
 from highway_disagreements.envs.highway_env_local import LocalHighwayEnv
-from rl_agents.agents.common.exploration.abstract import exploration_factory
+from highway_disagreements.get_agent import MyEvaluation
 from rl_agents.agents.common.factory import agent_factory
-from scripts.experiments import evaluate
-from stable_baselines import DQN
 
 
-# def configure_env():
-#     env = gym.make('highway-v0')
-#     env.configure({
-#         "lanes_count": 4,
-#         "vehicles_count": 40,
-#         "observation": {
-#             "type": "GrayscaleObservation",
-#             "observation_shape": (128, 64),
-#             "stack_size": 4,
-#             "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion
-#             "scaling": 1.75,
-#         },
-#         "policy_frequency": 2,
-#         "duration": 40,
-#     })
-#     env.reset()
-#     return env
-#
-# env = configure_env()
-
+agent_config = {
+        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+        "pretrained_model_path": 'agents/DQN_1000ep/checkpoint-final.tar',
+    }
 
 env = gym.make('highway_local-v0')
-agent = DQN('MlpPolicy', env)
-agent.learn(int(1e1))
-agent.save('agents/dqn_highway')
+env.configure({"offscreen_rendering": True})
+agent = agent_factory(env, agent_config)
 
-# env = gym.make('highway_local-v0')
-# config = {
-#         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-#     }
-# agent = agent_factory(env, config)
-# # implement deterministic greedy policy
-# agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
-#
-# agent.learn(int(1e1))
-# agent.save('agents/dqn_highway')
+"""train agent"""
+evaluation = MyEvaluation(env, agent, output_dir='agents', num_episodes=10, display_env=False)
+evaluation.train()
+
+"""load agent"""
+# evaluation = MyEvaluation(env, agent, num_episodes=3, display_env=True)
+# agent_path = Path(abspath(agent_config['pretrained_model_path']))
+# evaluation.load_agent_model(agent_path)
+
+
+"""evaluate"""
+# evaluation.test()
+

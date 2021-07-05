@@ -28,6 +28,7 @@ def online_comparison(args):
     for e in range(args.num_episodes):
         log(f'Running Episode number: {e}', args.verbose)
         curr_obs, _ = env1.reset(), env2.reset()
+        a1.previous_state = curr_obs
         """get initial state"""
         t = 0
         done = False
@@ -183,10 +184,11 @@ if __name__ == '__main__':
     """experiment parameters"""
     args.a1_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+        "pretrained_model_path": '../agents/DQN_1000ep/checkpoint-final.tar',
     }
     args.a2_config = {
-        "__class__": "<class 'rl_agents.agents.fitted_q.pytorch.FTQAgent'>",
-        # "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+        "pretrained_model_path": '../agents/DQN_10ep/checkpoint-final.tar',
     }
 
     # args.fps = 1
@@ -197,16 +199,19 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    args.state_importance = "sb"  # "sb" "bety"
+    args.state_importance = "bety"  # "sb" "bety"
     args.trajectory_importance = "avg"  # last_state, max_min, max_avg, avg, avg_delta
-    args.importance_type = 'state'  # state/trajectory
+    args.importance_type = 'trajectory'  # state/trajectory
 
     """"""
-    args.horizon = 10
-    args.fps = 2
+    args.verbose = False
+    args.horizon = 20
+    args.fps = 5
     args.num_episodes = 3
-    args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
-    args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
+    # args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
+    # args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
+    args.a1_name = args.a1_config["pretrained_model_path"].split('/')[2]
+    args.a2_name = args.a2_config["pretrained_model_path"].split('/')[2]
     args.results_dir = abspath('results')
     # args.traces_path = join('results', 'DQNAgent_FTQAgent_29-06_10:42:33')
     args.traces_path = None
