@@ -3,11 +3,11 @@ import random
 from os.path import abspath
 from os.path import join
 from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
-    DisagreementTrace, State
+    DisagreementTrace, State, make_same_length
 from get_agent import get_agent
+from highway_disagreements.side_by_side import side_by_side_video
 from highway_disagreements.agent_score import agent_assessment
 from highway_disagreements.logging_info import get_logging, log
-from highway_disagreements.side_by_side import side_by_side_video
 from highway_disagreements.utils import load_traces, save_traces
 from copy import deepcopy
 
@@ -36,16 +36,12 @@ def online_comparison(args):
         a1_s_a_values = a1.get_state_action_values(curr_obs)
         a2_s_a_values = a2.get_state_action_values(curr_obs)
         frame = env1.render(mode='rgb_array')
-        position = env1.vehicle.position
-        state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame, position)
-        a1_a, _ = a1.act(curr_s), a2.act(curr_s)
+        state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
+        a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
         """initiate and update trace"""
         trace = DisagreementTrace(e, args.horizon, agent_ratio)
         trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
         while not done:
-            """Observe both agent's desired action"""
-            a1_a = a1.act(curr_s)
-            a2_a = a2.act(curr_s)
             """check for disagreement"""
             if a1_a != a2_a:
                 copy_env2 = deepcopy(env2)
@@ -56,17 +52,18 @@ def online_comparison(args):
             """Transition both agent's based on agent 1 action"""
             new_obs, r, done, info = env1.step(a1_a)
             _ = env2.step(a1_a)  # dont need returned values
+            assert new_obs.tolist() == _[0].tolist(), f'Nonidentical environment transition'
             new_s = new_obs
             """get new state"""
             t += 1
             new_a1_s_a_values = a1.get_state_action_values(new_s)
             new_a2_s_a_values = a2.get_state_action_values(new_s)
             new_frame = env1.render(mode='rgb_array')
-            new_position = env1.vehicle.position
-            new_state = State(t, e, new_obs, new_s, new_a1_s_a_values, new_frame, new_position)
-            new_a = a1.act(curr_s)
+            new_state = State(t, e, new_obs, new_s, new_a1_s_a_values, new_frame)
+            a1_a = a1.act(new_s)
+            a2_a = a2.act(curr_s)
             """update trace"""
-            trace.update(new_state, new_obs, new_a, new_a1_s_a_values,
+            trace.update(new_state, new_obs, a1_a, new_a1_s_a_values,
                          new_a2_s_a_values, r, done, info)
             """update params for next iteration"""
             curr_s = new_s
@@ -81,16 +78,17 @@ def online_comparison(args):
 
 
 def rank_trajectories(traces, importance_type, state_importance, traj_importance):
-    # TODO check that trajectories are being summed correctly (different lengths)
-    # check that
     for trace in traces:
+        a1_q_max, a2_q_max = trace.a1_max_q_val, trace.a2_max_q_val
         for i, trajectory in enumerate(trace.disagreement_trajectories):
             if importance_type == 'state':
-                importance = trajectory.calculate_state_importance(state_importance)
+                importance = trajectory.calculate_state_importance(state_importance, a1_q_max,
+                                                                   a2_q_max)
             else:
                 # TODO check that all importance criteria work
                 importance = trajectory.calculate_trajectory_importance(trace, i, traj_importance,
-                                                                        state_importance)
+                                                                        state_importance,
+                                                                        a1_q_max, a2_q_max)
             trajectory.importance = importance
 
 
@@ -105,6 +103,9 @@ def main(args):
     save_traces(traces, output_dir)
     log(f'Saved traces', args.verbose)
 
+    """normalize q-values for agents"""
+    # normalize_q_values(traces)
+
     """rank disagreement trajectories by importance measures"""
     rank_trajectories(traces, args.importance_type, args.state_importance,
                       args.trajectory_importance)
@@ -113,30 +114,26 @@ def main(args):
     disagreements = get_top_k_disagreements(traces, args)
     log(f'Obtained {len(disagreements)} disagreements', args.verbose)
 
+    """make all trajectories the same length"""
+    disagreements = make_same_length(disagreements, args.horizon, traces)
+
     """randomize order"""
     if args.randomized: random.shuffle(disagreements)
 
     """mark disagreement frames"""
-    # TODO mark agent, needed?
     a1_disagreement_frames, a2_disagreement_frames = [], []
     for d in disagreements:
-        # state_idx = d.a1_states[(args.horizon // 2) - 1]
-        # state = traces[d.episode].states[state_idx]
-        # state.image = mark_agent(state.image, state.position)
         a1_frames, a2_frames = traces[d.episode].get_frames(d.a1_states, d.a2_states,
                                                             d.trajectory_index,
                                                             mark_position=[164, 66])
-        # for i in range(args.horizon // 2, args.horizon):
-        #     a1_position = d.a1_states[i].agent_position
-        #     a2_position = d.a2_states[i].agent_position
-        #     a1_frames[i] = mark_agent(a1_frames[i], position=a1_position, color=(255, 0,))
-        #     a2_frames[i] = mark_agent(a2_frames[i], position=a2_position, color=(0, 0, 0))
         a1_disagreement_frames.append(a1_frames)
         a2_disagreement_frames.append(a2_frames)
 
     """save disagreement frames"""
-    video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames, output_dir,
-                                   args.fps)
+    # video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames, output_dir,
+    #                                args.fps)
+    video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
+                                        output_dir, args.fps)
     log(f'Disagreements saved', args.verbose)
 
     """generate video"""
@@ -184,11 +181,11 @@ if __name__ == '__main__':
     """experiment parameters"""
     args.a1_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "pretrained_model_path": '../agents/DQN_1000ep/checkpoint-final.tar',
+        "path": '../agents/DQN_1000ep/checkpoint-final.tar',
     }
     args.a2_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "pretrained_model_path": '../agents/DQN_10ep/checkpoint-final.tar',
+        "path": '../agents/DQN_10ep/checkpoint-final.tar',
     }
 
     # args.fps = 1
@@ -205,16 +202,15 @@ if __name__ == '__main__':
 
     """"""
     args.verbose = False
-    args.horizon = 20
-    args.fps = 5
+    args.horizon = 30
+    args.fps = 3
     args.num_episodes = 3
     # args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
     # args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
-    args.a1_name = args.a1_config["pretrained_model_path"].split('/')[2]
-    args.a2_name = args.a2_config["pretrained_model_path"].split('/')[2]
+    args.a1_name = args.a1_config["path"].split('/')[2]
+    args.a2_name = args.a2_config["path"].split('/')[2]
     args.results_dir = abspath('results')
-    # args.traces_path = join('results', 'DQNAgent_FTQAgent_29-06_10:42:33')
-    args.traces_path = None
+    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-12_14:24:22_DQN_1000ep-DQN_10ep'
 
     """RUN"""
     main(args)

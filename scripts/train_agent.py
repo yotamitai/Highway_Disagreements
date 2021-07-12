@@ -10,7 +10,7 @@ from rl_agents.agents.common.factory import agent_factory
 
 agent_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "pretrained_model_path": 'agents/DQN_1000ep/checkpoint-final.tar',
+        "path": 'agents/DQN_1000ep/checkpoint-final.tar',
     }
 
 env = gym.make('highway_local-v0')

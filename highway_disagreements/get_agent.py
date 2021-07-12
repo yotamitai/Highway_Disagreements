@@ -28,7 +28,7 @@ def get_agent(config, env=None, env_id=None, seed=None, offscreen_rendering=True
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
     # create evaluation
     evaluation = MyEvaluation(env, agent, display_env=False)
-    agent_path = Path(abspath(config['pretrained_model_path']))
+    agent_path = Path(abspath(config['path']))
     # load agent
     evaluation.load_agent_model(agent_path)
     agent = evaluation.agent
