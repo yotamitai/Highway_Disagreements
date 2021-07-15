@@ -14,14 +14,14 @@ class MyEvaluation(Evaluation):
                                            display_env=display_env)
 
 
-def get_agent(config, env=None, env_id=None, seed=None, offscreen_rendering=True):
+def get_agent(config, env=None, env_id=None, seed=None):
     """Implement here for specific agent and environment loading scheme"""
     if not env:
         assert env_id, 'No env_id supplied for agent environment'
         assert seed is not None, 'No random seed supplied for agent environment'
         env = gym.make(env_id)
         env.seed(seed)
-        env.configure({"offscreen_rendering": offscreen_rendering})
+        env.configure(config)
     # config agent agent
     agent = agent_factory(env, config)
     # implement deterministic greedy policy

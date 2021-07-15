@@ -180,10 +180,12 @@ if __name__ == '__main__':
     args.a1_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
         "path": '../agents/DQN_1000ep/checkpoint-final.tar',
+        "offscreen_rendering": True,
     }
     args.a2_config = {
         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
         "path": '../agents/DQN_10ep/checkpoint-final.tar',
+        "offscreen_rendering": True,
     }
 
     # args.fps = 1
