@@ -23,15 +23,12 @@ class DisagreementTrace(object):
         self.a2_trajectories = []
         self.a1_trajectory_indexes = []
         self.episode = episode
-        self.a1_rewards = []
         self.a2_rewards = []
         self.a1_max_q_val = 0
         self.a2_max_q_val = 0
         self.agent_ratio = agent_ratio
         self.disagreement_indexes = []
-        self.importance_scores = []
         self.disagreement_trajectories = []
-        self.diverse_trajectories = []
         self.a1_s_a_values = []
         self.a2_s_a_values = []
         self.a2_values_for_a1_states = []

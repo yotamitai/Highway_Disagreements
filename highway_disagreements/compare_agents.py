@@ -27,19 +27,17 @@ def online_comparison(args):
     traces = []
     for e in range(args.num_episodes):
         log(f'Running Episode number: {e}', args.verbose)
+        trace = DisagreementTrace(e, args.horizon, agent_ratio)
         curr_obs, _ = env1.reset(), env2.reset()
         a1.previous_state = curr_obs
         """get initial state"""
-        t = 0
-        done = False
+        t, r, done  = 0, 0, False
         curr_s = curr_obs
         a1_s_a_values = a1.get_state_action_values(curr_obs)
         a2_s_a_values = a2.get_state_action_values(curr_obs)
         frame = env1.render(mode='rgb_array')
         state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
         a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
-        """initiate and update trace"""
-        trace = DisagreementTrace(e, args.horizon, agent_ratio)
         trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
         while not done:
             """check for disagreement"""
@@ -210,7 +208,7 @@ if __name__ == '__main__':
     args.a1_name = args.a1_config["path"].split('/')[2]
     args.a2_name = args.a2_config["path"].split('/')[2]
     args.results_dir = abspath('results')
-    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-12_14:24:22_DQN_1000ep-DQN_10ep'
+    # args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-12_14:24:22_DQN_1000ep-DQN_10ep'
 
     """RUN"""
     main(args)
