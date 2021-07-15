@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('-env', '--env_id', help='environment name', default="highway_local-v0")
     parser.add_argument('-load', '--load_path', help='path to pre-trained agent', default=None)
     parser.add_argument('-config', '--config_path', help='path to env config file', default=None)
-    parser.add_argument('-n_ep', '--num_episodes', help='number of episodes to run for test or train', default=3)
+    parser.add_argument('-n_ep', '--num_episodes', help='number of episodes to run for test or train', default=3, type=int)
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
 
