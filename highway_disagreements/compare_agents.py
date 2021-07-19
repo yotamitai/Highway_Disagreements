@@ -2,6 +2,10 @@ import argparse
 import random
 from os.path import abspath
 from os.path import join
+
+import numpy as np
+from numpy import argmax
+
 from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
     DisagreementTrace, State, make_same_length
 from get_agent import get_agent
@@ -31,7 +35,7 @@ def online_comparison(args):
         curr_obs, _ = env1.reset(), env2.reset()
         a1.previous_state = curr_obs
         """get initial state"""
-        t, r, done  = 0, 0, False
+        t, r, done = 0, 0, False
         curr_s = curr_obs
         a1_s_a_values = a1.get_state_action_values(curr_obs)
         a2_s_a_values = a2.get_state_action_values(curr_obs)
@@ -121,9 +125,11 @@ def main(args):
     """mark disagreement frames"""
     a1_disagreement_frames, a2_disagreement_frames = [], []
     for d in disagreements:
-        a1_frames, a2_frames = traces[d.episode].get_frames(d.a1_states, d.a2_states,
-                                                            d.trajectory_index,
-                                                            mark_position=[164, 66])
+        t = traces[d.episode]
+        relative_idx = d.da_index - d.a1_states[0]
+        actions = argmax(d.a1_s_a_values[relative_idx]), argmax(d.a2_s_a_values[relative_idx])
+        a1_frames, a2_frames = t.get_frames(d.a1_states, d.a2_states, d.trajectory_index,
+                                            mark_position=[164, 66], actions=actions)
         a1_disagreement_frames.append(a1_frames)
         a2_disagreement_frames.append(a2_frames)
 
@@ -131,12 +137,12 @@ def main(args):
     # video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames, output_dir,
     #                                args.fps)
     video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
-                                        output_dir, args.fps)
+                                   output_dir, args.fps)
     log(f'Disagreements saved', args.verbose)
 
     """generate video"""
     fade_duration = 2
-    fade_out_frame = args.horizon - fade_duration
+    fade_out_frame = args.horizon - fade_duration + 11 # +11 from pause in save_disagreements
     side_by_side_video(video_dir, args.n_disagreements, fade_out_frame, name)
     log(f'DAs Video Generated', args.verbose)
 
@@ -196,21 +202,21 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    args.state_importance = "bety"  # "sb" "bety"
-    args.trajectory_importance = "avg"  # last_state, max_min, max_avg, avg, avg_delta
+    args.state_importance = "sb"  # "sb" "bety"
+    args.trajectory_importance = "last_state"  # last_state, max_min, max_avg, avg, avg_delta
     args.importance_type = 'trajectory'  # state/trajectory
 
     """"""
     args.verbose = False
     args.horizon = 30
     args.fps = 3
-    args.num_episodes = 3
+    args.num_episodes = 2
     # args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
     # args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
     args.a1_name = args.a1_config["path"].split('/')[2]
     args.a2_name = args.a2_config["path"].split('/')[2]
     args.results_dir = abspath('results')
-    # args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-12_14:24:22_DQN_1000ep-DQN_10ep'
+    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-19_11:32:35_DQN_1000ep-DQN_10ep'
 
     """RUN"""
     main(args)

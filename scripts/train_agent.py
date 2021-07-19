@@ -57,6 +57,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # args.load_path = abspath('agents/LocalHighwayEnv/DQNAgent/run_20210715-134954_75081/checkpoint-final.tar')
-    # args.config_path = abspath('highway_disagreements/agent_configs/fastSafe.json')
+    args.config_path = abspath('highway_disagreements/agent_configs/fastSafe.json')
 
     main(args)

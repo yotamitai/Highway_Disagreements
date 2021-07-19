@@ -7,6 +7,8 @@ from rl_agents.agents.common.factory import agent_factory
 from rl_agents.trainer.evaluation import Evaluation
 
 
+ACTION_DICT = {0: 'LANE_LEFT', 1: 'IDLE', 2: 'LANE_RIGHT', 3: 'FASTER', 4: 'SLOWER'}
+
 class MyEvaluation(Evaluation):
     def __init__(self, env, agent, output_dir='../agents', num_episodes=1000, display_env=False):
         self.OUTPUT_FOLDER = output_dir
