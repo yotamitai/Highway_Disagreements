@@ -135,7 +135,7 @@ if __name__ == '__main__':
     args.results_dir = abspath('results')
 
     # RUN
-    args.agent_path = '../agents/rightLane/checkpoint-best.tar'
+    args.agent_path = '../agents/Saved_Agents/rightLane/checkpoint-best.tar'
     args.env_config = abspath('../highway_disagreements/envs/env_configs/rightLane.json')
     args.env_id = "fastRight-v0"
     args.seed = 0

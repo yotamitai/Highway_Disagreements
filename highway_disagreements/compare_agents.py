@@ -203,8 +203,8 @@ if __name__ == '__main__':
     args.num_episodes = 2
 
     args.env_id = "fastRight-v0"
-    args.a1_path = '../agents/safe/checkpoint-best.tar'
-    args.a2_path = '../agents/fastFurious/checkpoint-best.tar'
+    args.a1_path = '../agents/Saved_Agents/safe/checkpoint-best.tar'
+    args.a2_path = '../agents/Saved_Agents/fastFurious/checkpoint-best.tar'
     args.env_config = abspath('envs/env_configs/rightLane.json')
     args.a1_name = args.a1_path.split('/')[2]
     args.a2_name = args.a2_path.split('/')[2]

@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
 
-    # args.load_path = abspath('agents/safe/checkpoint-best.tar')
+    # args.load_path = abspath('agents/Saved_agents/safe/checkpoint-best.tar')
     args.config_path = abspath('highway_disagreements/envs/env_configs/safe.json')
     args.env_id = "alwaysOne-v0"
     args.eval = True
