@@ -9,8 +9,8 @@ class Trajectory(object):
         self.states = states
         self.state_importance = importance_dict
         self.importance = {
-            'max_min': 0,
-            'max_avg': 0,
+            'max-min': 0,
+            'max-avg': 0,
             'avg': 0,
             'sum': 0,
             'avg_delta': 0,
@@ -30,7 +30,7 @@ class Trajectory(object):
                 min = state_importance
             if state_importance > max:
                 max = state_importance
-        self.importance['max_min'] = max - min
+        self.importance['max-min'] = max - min
 
     def trajectory_importance_max_avg(self):
         """ computes the importance of the trajectory, according to max-avg approach """
@@ -42,7 +42,7 @@ class Trajectory(object):
             if state_importance > max:
                 max = state_importance
         avg = float(sum) / len(self.states)
-        self.importance['max_avg'] = max - avg
+        self.importance['max-avg'] = max - avg
 
     def trajectory_importance_avg(self):
         """ computes the importance of the trajectory, according to avg approach """
@@ -66,7 +66,7 @@ class Trajectory(object):
 
 def trajectories_by_importance(execution_traces, state_importance, args):
     if args.load_trajectories:
-        all_trajectories = pickle_load(join(args.results_dir, 'Trajectories.pkl'))
+        all_trajectories = pickle_load(join(args.load_dir, 'Trajectories.pkl'))
         if args.verbose: print(f"HIGHLIGHTS {15 * '-' + '>'} Trajectories Loaded")
     else:
         all_trajectories = get_all_trajectories(execution_traces, args.trajectory_length, state_importance)

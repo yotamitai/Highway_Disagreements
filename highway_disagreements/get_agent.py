@@ -1,3 +1,4 @@
+import json
 from os.path import abspath
 from pathlib import Path
 
@@ -16,23 +17,24 @@ class MyEvaluation(Evaluation):
                                            display_env=display_env)
 
 
-def get_agent(config, env=None, env_id=None, seed=None):
+def get_agent(trained_agent_path, env=None, env_config=None, env_id=None, seed=None, args=None):
     """Implement here for specific agent and environment loading scheme"""
+    f = open(env_config)
+    env_config = json.load(f)
     if not env:
         assert env_id, 'No env_id supplied for agent environment'
         assert seed is not None, 'No random seed supplied for agent environment'
         env = gym.make(env_id)
-        env.seed(seed)
-        env.configure(config)
+        env.configure(env_config)
     # config agent agent
-    agent = agent_factory(env, config)
+    agent = agent_factory(env, env_config)
     # implement deterministic greedy policy
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
     # create evaluation
     evaluation = MyEvaluation(env, agent, display_env=False)
-    agent_path = Path(abspath(config['path']))
+    agent_path = Path(abspath(trained_agent_path))
     # load agent
     evaluation.load_agent_model(agent_path)
     agent = evaluation.agent
-
+    if args: env.args = args
     return env, agent

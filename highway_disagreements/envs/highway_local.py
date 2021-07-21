@@ -108,8 +108,3 @@ class LocalHighwayEnv(AbstractEnv):
         """The cost signal is the occurrence of collision."""
         return float(self.vehicle.crashed)
 
-
-register(
-    id='highway_local-v0',
-    entry_point='highway_disagreements.envs.highway_env_local:LocalHighwayEnv',
-)

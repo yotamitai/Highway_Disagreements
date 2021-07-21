@@ -6,7 +6,7 @@ import gym
 import pandas as pd
 from os.path import join, basename, abspath
 
-from get_agent import get_agent
+from highway_disagreements.get_agent import get_agent
 from get_traces import get_traces
 from highlights.utils import create_video, make_clean_dirs, pickle_save
 from highlights_state_selection import compute_states_importance, highlights, highlights_div
@@ -17,11 +17,12 @@ from ffmpeg import merge_and_fade
 
 def get_highlights(args):
     args.output_dir = join(abspath('results'), '_'.join(
-        [args.id, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
+        [args.name, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
     make_clean_dirs(args.output_dir)
 
-    env, agent, agent_args = get_agent(args)
-    traces, states = get_traces(env, agent, agent_args, abspath('results'), args)
+    env, agent = get_agent(args.agent_path, env_config=args.env_config,
+                           env_id=args.env_id, seed=args.seed)
+    traces, states = get_traces(env, agent, args)
 
     """highlights algorithm"""
     data = {
@@ -73,7 +74,7 @@ def get_highlights(args):
     """Merge Highlights to a single video with fade in/ fade out effects"""
     fade_out_frame = args.trajectory_length - args.fade_duration
     merge_and_fade(videos_dir, args.num_trajectories, fade_out_frame, args.fade_duration,
-                   args.id)
+                   args.name)
 
     """Save data used for this run"""
     pickle_save(traces, join(args.output_dir, 'Traces.pkl'))
@@ -115,34 +116,28 @@ if __name__ == '__main__':
                         help='load previously generated trajectories', type=bool, default=False)
     args = parser.parse_args()
 
-    """agent parameters"""
-    args.agent_config = {
-        # "__class__": "<class 'rl_agents.agents.simple.open_loop.OpenLoopAgent'>",
-        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "gamma": 0.7,
-    }
-    args.num_episodes = 1  # max 2000 (defined in configuration.py)
-    args.fps = 2
-    args.verbose = True
-    args.record = 'all'
-    args.show_score_bar = False
-    args.clear_results = True
-
     """Highlight parameters"""
     args.n_traces = 10
-    args.trajectory_importance = "single_state"
+    args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
     args.num_trajectories = 5
-    args.trajectory_length = 10
+    args.trajectory_length = 30
     args.fade_duration = 2
     args.minimum_gap = 0
-    args.overlay_limit = 3
+    args.overlay_limit = 5
     args.allowed_similar_states = 3
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
-    args.load_traces = False
-    args.load_trajectories = False
     args.randomized = True
+    args.fps = 10
+    args.verbose = True
+    args.load_dir = False #abspath('results/safe_10:39:01_21-07-2021')
+    args.load_trajectories = False
+    args.results_dir = abspath('results')
 
     # RUN
-    args.name = args.agent_config["__class__"].split('.')[-1][:-2]
+    args.agent_path = '../agents/rightLane/checkpoint-best.tar'
+    args.env_config = abspath('../highway_disagreements/envs/env_configs/rightLane.json')
+    args.env_id = "fastRight-v0"
+    args.seed = 0
+    args.name = args.agent_path.split('/')[-2]
     get_highlights(args)

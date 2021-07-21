@@ -19,13 +19,14 @@ from copy import deepcopy
 def online_comparison(args):
     """Compare two agents running online, search for disagreements"""
     """get agents and environments"""
-    env1, a1 = get_agent(args.a1_config, env_id=args.env_id, seed=args.seed)
-    env1.args = args
-    env2, a2 = get_agent(args.a2_config, env=deepcopy(env1))
+    env1, a1 = get_agent(args.a1_path, env_config=args.env_config, env_id=args.env_id,
+                         seed=args.seed, args=args)
+    env2, a2 = get_agent(args.a2_path, env=deepcopy(env1), env_config=args.env_config)
 
     """agent assessment"""
-    agent_ratio = 1 if not args.agent_assessment else \
-        agent_assessment(args.a1_config, args.a2_config)
+    agent_ratio = 1
+    # agent_ratio = 1 if not args.agent_assessment else \
+    #     agent_assessment(args.a1_config, args.a2_config)
 
     """Run"""
     traces = []
@@ -152,7 +153,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Agent Comparisons')
-    parser.add_argument('-env', '--env_id', help='environment name', default="highway_local-v0")
+    parser.add_argument('-env', '--env_id', help='environment name', default="fastRight-v0")
     parser.add_argument('-a1', '--a1_name', help='agent name', type=str, default="Agent-1")
     parser.add_argument('-a2', '--a2_name', help='agent name', type=str, default="Agent-2")
     parser.add_argument('-n', '--num_episodes', help='number of episodes to run', type=int,
@@ -183,17 +184,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """experiment parameters"""
-    args.a1_config = {
-        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "path": '../agents/DQN_1000ep/checkpoint-final.tar',
-        "offscreen_rendering": True,
-    }
-    args.a2_config = {
-        "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-        "path": '../agents/DQN_10ep/checkpoint-final.tar',
-        "offscreen_rendering": True,
-    }
-
     # args.fps = 1
 
     # args.show_score_bar = False
@@ -202,21 +192,24 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    args.state_importance = "sb"  # "sb" "bety"
+    args.state_importance = "bety"  # "sb" "bety"
     args.trajectory_importance = "last_state"  # last_state, max_min, max_avg, avg, avg_delta
     args.importance_type = 'trajectory'  # state/trajectory
 
     """"""
     args.verbose = False
     args.horizon = 30
-    args.fps = 3
+    args.fps = 5
     args.num_episodes = 2
-    # args.a1_name = args.a1_config["__class__"].split('.')[-1][:-2]
-    # args.a2_name = args.a2_config["__class__"].split('.')[-1][:-2]
-    args.a1_name = args.a1_config["path"].split('/')[2]
-    args.a2_name = args.a2_config["path"].split('/')[2]
+
+    args.env_id = "fastRight-v0"
+    args.a1_path = '../agents/safe/checkpoint-best.tar'
+    args.a2_path = '../agents/fastFurious/checkpoint-best.tar'
+    args.env_config = abspath('envs/env_configs/rightLane.json')
+    args.a1_name = args.a1_path.split('/')[2]
+    args.a2_name = args.a2_path.split('/')[2]
     args.results_dir = abspath('results')
-    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-19_11:32:35_DQN_1000ep-DQN_10ep'
+    args.traces_path = None
 
     """RUN"""
     main(args)

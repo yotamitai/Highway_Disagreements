@@ -9,17 +9,16 @@ from highway_disagreements.get_agent import MyEvaluation
 from rl_agents.agents.common.factory import agent_factory
 
 
-
 def config(config_path, env_id):
     # agent_config = {
     #         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
     #         "path": 'agents/DQN_1000ep/checkpoint-final.tar',
     #     }
     f = open(config_path)
-    agent_config = json.load(f)
+    env_config = json.load(f)
     env = gym.make(env_id)
-    agent = agent_factory(env, agent_config)
-    env.configure(agent_config)
+    agent = agent_factory(env, env_config)
+    env.configure(env_config)
     return env, agent
 
 def train_agent(env, agent, num_episodes):
@@ -56,7 +55,10 @@ if __name__ == '__main__':
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
 
-    # args.load_path = abspath('agents/LocalHighwayEnv/DQNAgent/run_20210715-134954_75081/checkpoint-final.tar')
-    args.config_path = abspath('highway_disagreements/agent_configs/fastSafe.json')
+    # args.load_path = abspath('agents/safe/checkpoint-best.tar')
+    args.config_path = abspath('highway_disagreements/envs/env_configs/safe.json')
+    args.env_id = "alwaysOne-v0"
+    args.eval = True
+    args.num_episodes = 2
 
     main(args)

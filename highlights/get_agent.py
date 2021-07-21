@@ -1,12 +1,12 @@
 from rl_agents.agents.common.factory import agent_factory
-from highway_disagreements.envs.highway_env_local import LocalHighwayEnv
+from highway_disagreements.envs.reward_functions import LocalHighwayEnv
 
 def get_agent(args):
     """Implement here for specific agent and environment loading scheme"""
     # env = gym.make("highway-v0")
     env = LocalHighwayEnv()
     # Make agent
-    agent = agent_factory(env, args.agent_config)
+    agent = agent_factory(env, args.config)
 
     return env, agent, {}
 
