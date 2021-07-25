@@ -53,7 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # args.load_path = abspath('agents/Saved_agents/safe/checkpoint-best.tar')
-    args.config_path = abspath('highway_disagreements/envs/env_configs/clearLane_fitted.json')
+    args.config_path = abspath('highway_disagreements/envs/env_configs/clearLane.json')
     args.eval = True
     args.num_episodes = 1000
 

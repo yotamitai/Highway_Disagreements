@@ -51,6 +51,15 @@ class OnlySpeed(LocalHighwayEnv):
         reward = 0 if not self.vehicle.on_road else reward
         return reward
 
+class OnlyRight(LocalHighwayEnv):
+
+    def _reward(self, action: Action) -> float:
+        lanes = self.road.network.all_side_lanes(self.vehicle.lane_index)
+        lane = self.vehicle.target_lane_index[2] if isinstance(self.vehicle, ControlledVehicle) \
+            else self.vehicle.lane_index[2]
+        reward = self.config["right_lane_reward"] * lane / max(len(lanes) - 1, 1)
+        return reward
+
 
 class ClearLane(LocalHighwayEnv):
 
@@ -77,7 +86,10 @@ register(
     id='onlySafe-v0',
     entry_point='highway_disagreements.envs.reward_functions:OnlySafe',
 )
-
+register(
+    id='onlyRight-v0',
+    entry_point='highway_disagreements.envs.reward_functions:OnlyRight',
+)
 register(
     id='clearLane-v0',
     entry_point='highway_disagreements.envs.reward_functions:ClearLane',
