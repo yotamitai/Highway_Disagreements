@@ -5,8 +5,9 @@
   "action": {
       "type": "DiscreteMetaAction"
   },
+  "env_id": "fastRight-v0",
   "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-    "offscreen_rendering": true,
+  "offscreen_rendering": true,
   "simulation_frequency": 20,
   "policy_frequency": 10,
   "lanes_count": 4,

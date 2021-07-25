@@ -1,11 +1,13 @@
 {
   "observation": {
-      "type": "Kinematics"
+      "type": "Kinematics",
+      "absolute": false,
+      "vehicles_count": 8
   },
   "action": {
       "type": "DiscreteMetaAction"
   },
-  "env_id": "fastRight-v0",
+  "env_id": "clearLane-v0",
   "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
   "offscreen_rendering": true,
   "simulation_frequency": 20,
@@ -19,8 +21,8 @@
   "vehicles_density": 2,
   "reward_speed_range": [20, 30],
   "offroad_terminal": false,
-  "collision_reward": 0,
+  "collision_reward": -5,
   "right_lane_reward": 0,
-  "high_speed_reward": 5,
+  "high_speed_reward": 0,
   "lane_change_reward": 0
 }

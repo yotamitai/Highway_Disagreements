@@ -9,14 +9,10 @@ from highway_disagreements.get_agent import MyEvaluation
 from rl_agents.agents.common.factory import agent_factory
 
 
-def config(config_path, env_id):
-    # agent_config = {
-    #         "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
-    #         "path": 'agents/DQN_1000ep/checkpoint-final.tar',
-    #     }
+def config(config_path):
     f = open(config_path)
     env_config = json.load(f)
-    env = gym.make(env_id)
+    env = gym.make(env_config["env_id"])
     agent = agent_factory(env, env_config)
     env.configure(env_config)
     return env, agent
@@ -40,7 +36,7 @@ def test_agent(evaluation):
 
 
 def main(args):
-    env, agent = config(args.config_path, args.env_id)
+    env, agent = config(args.config_path)
     evaluation = load_agent(env, agent, args.load_path, args.num_episodes) if args.load_path \
         else train_agent(env, agent, args.num_episodes)
     if args.eval: test_agent(evaluation)
@@ -48,7 +44,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Agent Comparisons')
-    parser.add_argument('-env', '--env_id', help='environment name', default="highway_local-v0")
+    # parser.add_argument('-env', '--env_id', help='environment name', default="highway_local-v0")
     parser.add_argument('-load', '--load_path', help='path to pre-trained agent', default=None)
     parser.add_argument('-config', '--config_path', help='path to env config file', default=None)
     parser.add_argument('-n_ep', '--num_episodes', help='number of episodes to run for test or train', default=3, type=int)
@@ -56,8 +52,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # args.load_path = abspath('agents/Saved_agents/safe/checkpoint-best.tar')
-    args.config_path = abspath('highway_disagreements/envs/env_configs/safe.json')
-    args.env_id = "alwaysOne-v0"
+    args.config_path = abspath('highway_disagreements/envs/env_configs/clearLane_fitted.json')
     args.eval = True
     args.num_episodes = 2
 
