@@ -15,6 +15,7 @@ def config(config_path):
     env = gym.make(env_config["env_id"])
     agent = agent_factory(env, env_config)
     env.configure(env_config)
+    env.define_spaces()
     return env, agent
 
 def train_agent(env, agent, num_episodes):
@@ -54,6 +55,6 @@ if __name__ == '__main__':
     # args.load_path = abspath('agents/Saved_agents/safe/checkpoint-best.tar')
     args.config_path = abspath('highway_disagreements/envs/env_configs/clearLane_fitted.json')
     args.eval = True
-    args.num_episodes = 2
+    args.num_episodes = 1000
 
     main(args)

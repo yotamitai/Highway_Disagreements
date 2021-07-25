@@ -2,7 +2,7 @@
   "observation": {
       "type": "Kinematics",
       "absolute": false,
-      "vehicles_count": 8
+      "vehicles_count": 5
   },
   "action": {
       "type": "DiscreteMetaAction"
