@@ -19,7 +19,7 @@
   "vehicles_density": 2,
   "reward_speed_range": [20, 30],
   "offroad_terminal": false,
-  "collision_reward": 0,
+  "collision_reward": -5,
   "right_lane_reward": 0,
   "high_speed_reward": 5,
   "lane_change_reward": 0

@@ -40,7 +40,7 @@ class OnlySafe(LocalHighwayEnv):
 
     def _reward(self, action: Action) -> float:
         reward = 1 if not self.vehicle.crashed else self.config["collision_reward"]
-        reward = 0 if not self.vehicle.on_road else reward
+        if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
 
@@ -48,7 +48,8 @@ class OnlySpeed(LocalHighwayEnv):
 
     def _reward(self, action: Action) -> float:
         reward = utils.lmap(self.vehicle.speed, self.config["reward_speed_range"], [0, 1])
-        reward = 0 if not self.vehicle.on_road else reward
+        if self.vehicle.crashed: reward = self.config["collision_reward"]
+        if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
 class OnlyRight(LocalHighwayEnv):
@@ -58,6 +59,8 @@ class OnlyRight(LocalHighwayEnv):
         lane = self.vehicle.target_lane_index[2] if isinstance(self.vehicle, ControlledVehicle) \
             else self.vehicle.lane_index[2]
         reward = self.config["right_lane_reward"] * lane / max(len(lanes) - 1, 1)
+        if self.vehicle.crashed: reward = self.config["collision_reward"]
+        if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
 
@@ -69,8 +72,8 @@ class ClearLane(LocalHighwayEnv):
         obs = self.observation_type.observe()
         cars_in_lane_in_front = [x for x in obs if x[1] > 0 and abs(x[2]) <= 0.05]
         reward = 1 if not cars_in_lane_in_front else min(cars_in_lane_in_front[0][1], 1)
-        if self.vehicle.crashed: reward = 0
-        if not self.vehicle.on_road: reward = 0
+        if self.vehicle.crashed: reward = self.config["collision_reward"]
+        if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
 
