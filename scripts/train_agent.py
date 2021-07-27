@@ -52,8 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
 
-    args.load_path = abspath('agents/Saved_agents/clearLane_1000ep/checkpoint-final.tar')
-    args.config_path = abspath('highway_disagreements/envs/env_configs/clearLane.json')
+    # args.load_path = abspath('agents/Saved_agents/clearLane_1000ep/checkpoint-final.tar')
+    args.config_path = abspath('highway_disagreements/envs/env_configs/rightLane.json')
     args.eval = True
     args.num_episodes = 10
 

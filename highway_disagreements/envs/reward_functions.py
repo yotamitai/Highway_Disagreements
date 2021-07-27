@@ -1,13 +1,9 @@
 import numpy as np
 from gym.envs.registration import register
-from numpy import where
 
 from highway_disagreements.envs.highway_local import LocalHighwayEnv
 from highway_env import utils
-from highway_env.envs.common.abstract import AbstractEnv
 from highway_env.envs.common.action import Action
-from highway_env.road.road import Road, RoadNetwork
-from highway_env.utils import near_split
 from highway_env.vehicle.controller import ControlledVehicle
 
 
@@ -52,7 +48,7 @@ class OnlySpeed(LocalHighwayEnv):
         if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
-class OnlyRight(LocalHighwayEnv):
+class RightLane(LocalHighwayEnv):
 
     def _reward(self, action: Action) -> float:
         lanes = self.road.network.all_side_lanes(self.vehicle.lane_index)
@@ -90,8 +86,8 @@ register(
     entry_point='highway_disagreements.envs.reward_functions:OnlySafe',
 )
 register(
-    id='onlyRight-v0',
-    entry_point='highway_disagreements.envs.reward_functions:OnlyRight',
+    id='rightLane-v0',
+    entry_point='highway_disagreements.envs.reward_functions:RightLane',
 )
 register(
     id='clearLane-v0',
