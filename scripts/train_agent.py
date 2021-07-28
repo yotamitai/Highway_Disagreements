@@ -54,7 +54,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # env_config = "clearLane"
-    # agent_config = "ddqn"
+    # agent_config = "dueling_ddqn"
     # # args.load_path = abspath(f'agents/From_Server/{agent}/checkpoint-final.tar')
     # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
     # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')

@@ -13,7 +13,7 @@
         }
     },
     "double": true,
-    "gamma": 0.8,
+    "gamma": 0.99,
     "n_steps": 1,
     "batch_size": 100,
     "memory_capacity": 50000,
