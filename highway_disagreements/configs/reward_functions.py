@@ -1,13 +1,14 @@
 import numpy as np
 from gym.envs.registration import register
 
-from highway_disagreements.envs.highway_local import LocalHighwayEnv
+from highway_disagreements.configs.ARCHIVE_highway_local import LocalHighwayEnv
 from highway_env import utils
 from highway_env.envs.common.action import Action
 from highway_env.vehicle.controller import ControlledVehicle
+from highway_env.envs.highway_env import HighwayEnv
 
 
-class FastRight(LocalHighwayEnv):
+class FastRight(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         """
@@ -32,7 +33,7 @@ class FastRight(LocalHighwayEnv):
         return reward
 
 
-class OnlySafe(LocalHighwayEnv):
+class OnlySafe(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         reward = 1 if not self.vehicle.crashed else self.config["collision_reward"]
@@ -40,7 +41,7 @@ class OnlySafe(LocalHighwayEnv):
         return reward
 
 
-class OnlySpeed(LocalHighwayEnv):
+class OnlySpeed(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         reward = utils.lmap(self.vehicle.speed, self.config["reward_speed_range"], [0, 1])
@@ -48,7 +49,7 @@ class OnlySpeed(LocalHighwayEnv):
         if not self.vehicle.on_road: reward = self.config["collision_reward"]
         return reward
 
-class RightLane(LocalHighwayEnv):
+class RightLane(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         lanes = self.road.network.all_side_lanes(self.vehicle.lane_index)
@@ -60,7 +61,7 @@ class RightLane(LocalHighwayEnv):
         return reward
 
 
-class ClearLane(LocalHighwayEnv):
+class ClearLane(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         """ if no cars in your lane - max reward,
@@ -75,21 +76,21 @@ class ClearLane(LocalHighwayEnv):
 
 register(
     id='fastRight-v0',
-    entry_point='highway_disagreements.envs.reward_functions:FastRight',
+    entry_point='highway_disagreements.configs.reward_functions:FastRight',
 )
 register(
     id='onlySpeed-v0',
-    entry_point='highway_disagreements.envs.reward_functions:OnlySpeed',
+    entry_point='highway_disagreements.configs.reward_functions:OnlySpeed',
 )
 register(
     id='onlySafe-v0',
-    entry_point='highway_disagreements.envs.reward_functions:OnlySafe',
+    entry_point='highway_disagreements.configs.reward_functions:OnlySafe',
 )
 register(
     id='rightLane-v0',
-    entry_point='highway_disagreements.envs.reward_functions:RightLane',
+    entry_point='highway_disagreements.configs.reward_functions:RightLane',
 )
 register(
     id='clearLane-v0',
-    entry_point='highway_disagreements.envs.reward_functions:ClearLane',
+    entry_point='highway_disagreements.configs.reward_functions:ClearLane',
 )

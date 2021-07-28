@@ -1,1 +1,1 @@
-import highway_disagreements.envs
+import highway_disagreements.configs

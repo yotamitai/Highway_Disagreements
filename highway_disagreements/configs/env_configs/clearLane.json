@@ -8,12 +8,11 @@
       "type": "DiscreteMetaAction"
   },
   "env_id": "clearLane-v0",
-  "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
   "offscreen_rendering": true,
   "simulation_frequency": 20,
   "policy_frequency": 10,
   "lanes_count": 4,
-  "vehicles_count": 50,
+  "vehicles_count": 20,
   "controlled_vehicles": 1,
   "initial_lane_id": null,
   "duration": 200,

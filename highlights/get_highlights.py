@@ -83,7 +83,7 @@ def get_highlights(args):
     if args.verbose: print(f"Highlights {15 * '-' + '>'} Run Configurations Saved")
 
     env.close()
-    # del gym.envs.registration.registry.env_specs[env.spec.id]
+    # del gym.configs.registration.registry.env_specs[env.spec.id]
 
 
 if __name__ == '__main__':
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     # RUN
     args.agent_path = '../agents/Saved_Agents/rightLane/checkpoint-best.tar'
-    args.env_config = abspath('../highway_disagreements/envs/env_configs/rightLane.json')
+    args.env_config = abspath('../highway_disagreements/configs/env_configs/rightLane.json')
     args.env_id = "fastRight-v0"
     args.seed = 0
     args.name = args.agent_path.split('/')[-2]
