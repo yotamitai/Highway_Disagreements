@@ -7,8 +7,8 @@
     "double": true,
     "gamma": 0.8,
     "n_steps": 1,
-    "batch_size": 32,
-    "memory_capacity": 15000,
+    "batch_size": 100,
+    "memory_capacity": 50000,
     "target_update": 50,
     "exploration": {
         "method": "EpsilonGreedy",
