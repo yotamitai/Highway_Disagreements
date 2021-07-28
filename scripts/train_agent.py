@@ -1,34 +1,44 @@
 import argparse
 import json
-from os.path import abspath
+from os import listdir
+from os.path import abspath, join
 from pathlib import Path
 
 import gym
 import highway_env
 from highway_disagreements.get_agent import MyEvaluation
+from rl_agents.agents.common.exploration.abstract import exploration_factory
 from rl_agents.agents.common.factory import agent_factory
 
 
-def config(env_config_path, agent_config_path):
-    f1, f2 = open(env_config_path), open(agent_config_path)
-    env_config, agent_config = json.load(f1), json.load(f2)
+def config(env_config, agent_config):
     env = gym.make(env_config["env_id"])
     agent = agent_factory(env, agent_config)
     env.configure(env_config)
     env.define_spaces()
     return env, agent
 
-def train_agent(env, agent, num_episodes):
+
+def train_agent(env_config_path, agent_config_path, num_episodes):
     """train agent"""
+    f1, f2 = open(env_config_path), open(agent_config_path)
+    env_config, agent_config = json.load(f1), json.load(f2)
+    env, agent = config(env_config, agent_config)
     evaluation = MyEvaluation(env, agent, output_dir='agents', num_episodes=num_episodes, display_env=False)
     evaluation.train()
     return evaluation
 
 
-def load_agent(env, agent, load_path, num_episodes):
+def load_agent(load_path, num_episodes):
     """load agent"""
+    config_filename = [x for x in listdir(load_path) if "metadata" in x][0]
+    f = open(join(load_path,config_filename))
+    config_dict = json.load(f)
+    env_config, agent_config, = config_dict['env'], config_dict['agent']
+    env, agent = config(env_config, agent_config)
+    agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
     evaluation = MyEvaluation(env, agent, num_episodes=num_episodes, display_env=True, output_dir='agents')
-    agent_path = Path(load_path)
+    agent_path = Path(join(load_path, 'checkpoint-final.tar'))
     evaluation.load_agent_model(agent_path)
     return evaluation
 
@@ -37,9 +47,8 @@ def test_agent(evaluation):
 
 
 def main(args):
-    env, agent = config(args.env_config, args.agent_config)
-    evaluation = load_agent(env, agent, args.load_path, args.num_episodes) if args.load_path \
-        else train_agent(env, agent, args.num_episodes)
+    evaluation = load_agent(args.load_path, args.num_episodes) if args.load_path \
+        else train_agent(args.env_config, args.agent_config, args.num_episodes)
     if args.eval: test_agent(evaluation)
 
 
@@ -52,10 +61,11 @@ if __name__ == '__main__':
     parser.add_argument('-n_ep', '--num_episodes', help='number of episodes to run for test or train', default=3, type=int)
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
-
+    #
     # env_config = "clearLane"
     # agent_config = "dueling_ddqn"
-    # # args.load_path = abspath(f'agents/From_Server/{agent}/checkpoint-final.tar')
+    # agent = 'safe'
+    # # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
     # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
     # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
     # args.eval = True

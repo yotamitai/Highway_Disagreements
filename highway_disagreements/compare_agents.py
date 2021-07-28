@@ -19,9 +19,10 @@ from copy import deepcopy
 def online_comparison(args):
     """Compare two agents running online, search for disagreements"""
     """get agents and environments"""
-    env1, a1 = get_agent(args.a1_path, env_config=args.env_config, env_id=args.env_id,
-                         seed=args.seed, args=args)
-    env2, a2 = get_agent(args.a2_path, env=deepcopy(env1), env_config=args.env_config)
+    env1, a1 = get_agent(args.a1_path)
+    _, a2 = get_agent(args.a2_path)
+    env1.args = args
+    env2 = deepcopy(env1)
 
     """agent assessment"""
     agent_ratio = 1
@@ -47,8 +48,8 @@ def online_comparison(args):
         while not done:
             """check for disagreement"""
             if a1_a != a2_a:
-                copy_env2 = deepcopy(env2)
                 log(f'\tDisagreement at step {t}', args.verbose)
+                copy_env2 = deepcopy(env2)
                 disagreement(t, trace, env2, a2, curr_s, a1)
                 """return agent 2 to the disagreement state"""
                 env2 = copy_env2
@@ -82,6 +83,7 @@ def online_comparison(args):
 
 def rank_trajectories(traces, importance_type, state_importance, traj_importance):
     for trace in traces:
+        #TODO solve problem for when all q-values are negative!
         a1_q_max, a2_q_max = trace.a1_max_q_val, trace.a2_max_q_val
         for i, trajectory in enumerate(trace.disagreement_trajectories):
             if importance_type == 'state':
@@ -202,14 +204,14 @@ if __name__ == '__main__':
     args.fps = 5
     args.num_episodes = 2
 
-    args.env_id = "fastRight-v0"
-    args.a1_path = '../agents/Saved_Agents/safe/checkpoint-best.tar'
-    args.a2_path = '../agents/Saved_Agents/fastFurious/checkpoint-best.tar'
-    args.env_config = abspath('configs/env_configs/rightLane.json')
-    args.a1_name = args.a1_path.split('/')[2]
-    args.a2_name = args.a2_path.split('/')[2]
+    args.a1_name = 'safe'
+    args.a2_name = 'fast'
+    # args.a1_path = f'../agents/Saved_Agents/{args.a1_name}'
+    # args.a2_path = f'../agents/Saved_Agents/{args.a2_name}'
+    args.a1_path = f'../agents/Server_halfway/{args.a1_name}'
+    args.a2_path = f'../agents/Server_halfway/{args.a2_name}'
     args.results_dir = abspath('results')
-    args.traces_path = None
+    args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-28_17:40:10_safe-fast" # None
 
     """RUN"""
     main(args)

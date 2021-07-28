@@ -1,5 +1,6 @@
 import json
-from os.path import abspath
+from os import listdir
+from os.path import abspath, join
 from pathlib import Path
 
 import gym
@@ -17,24 +18,18 @@ class MyEvaluation(Evaluation):
                                            display_env=display_env)
 
 
-def get_agent(trained_agent_path, env=None, env_config=None, env_id=None, seed=None, args=None):
+def get_agent(load_path):
     """Implement here for specific agent and environment loading scheme"""
-    f = open(env_config)
-    env_config = json.load(f)
-    if not env:
-        assert env_id, 'No env_id supplied for agent environment'
-        assert seed is not None, 'No random seed supplied for agent environment'
-        env = gym.make(env_id)
-        env.configure(env_config)
-    # config agent agent
-    agent = agent_factory(env, env_config)
-    # implement deterministic greedy policy
+    config_filename = [x for x in listdir(load_path) if "metadata" in x][0]
+    f = open(join(load_path, config_filename))
+    config_dict = json.load(f)
+    env_config, agent_config, = config_dict['env'], config_dict['agent']
+    env = gym.make(env_config["env_id"])
+    agent = agent_factory(env, agent_config)
+    env.configure(env_config)
+    env.define_spaces()
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
-    # create evaluation
     evaluation = MyEvaluation(env, agent, display_env=False)
-    agent_path = Path(abspath(trained_agent_path))
-    # load agent
+    agent_path = Path(join(load_path, 'checkpoint-final.tar'))
     evaluation.load_agent_model(agent_path)
-    agent = evaluation.agent
-    if args: env.args = args
     return env, agent

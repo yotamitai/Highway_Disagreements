@@ -20,8 +20,8 @@ def get_highlights(args):
         [args.name, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
     make_clean_dirs(args.output_dir)
 
-    env, agent = get_agent(args.agent_path, env_config=args.env_config,
-                           env_id=args.env_id, seed=args.seed)
+    env, agent = get_agent(args.load_path)
+    env.args = args
     traces, states = get_traces(env, agent, args)
 
     """highlights algorithm"""
@@ -135,9 +135,11 @@ if __name__ == '__main__':
     args.results_dir = abspath('results')
 
     # RUN
-    args.agent_path = '../agents/Saved_Agents/rightLane/checkpoint-best.tar'
-    args.env_config = abspath('../highway_disagreements/configs/env_configs/rightLane.json')
-    args.env_id = "fastRight-v0"
-    args.seed = 0
-    args.name = args.agent_path.split('/')[-2]
+    agent = 'test'
+    args.load_path = f'../agents/Saved_Agents/{agent}'
+    # args.agent_path = f'../agents/Saved_Agents/{agent}/checkpoint-best.tar'
+    # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{agent}.json')
+    # args.env_id = "fastRight-v0"
+    # args.seed = 0
+    args.name = agent
     get_highlights(args)
