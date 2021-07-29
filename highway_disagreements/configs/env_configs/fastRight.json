@@ -6,7 +6,7 @@
   "action": {
       "type": "DiscreteMetaAction"
   },
-  "env_id": "onlySpeed-v0",
+  "env_id": "fastRight-v0",
   "offscreen_rendering": true,
   "simulation_frequency": 20,
   "policy_frequency": 10,

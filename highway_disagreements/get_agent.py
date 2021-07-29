@@ -18,14 +18,16 @@ class MyEvaluation(Evaluation):
                                            display_env=display_env)
 
 
-def get_agent(load_path):
+def get_agent(load_path, seed=0):
     """Implement here for specific agent and environment loading scheme"""
     config_filename = [x for x in listdir(load_path) if "metadata" in x][0]
     f = open(join(load_path, config_filename))
     config_dict = json.load(f)
     env_config, agent_config, = config_dict['env'], config_dict['agent']
     env = gym.make(env_config["env_id"])
+    env.seed(seed)
     agent = agent_factory(env, agent_config)
+    env_config.update({"simulation_frequency": 15, "policy_frequency": 5, })
     env.configure(env_config)
     env.define_spaces()
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)

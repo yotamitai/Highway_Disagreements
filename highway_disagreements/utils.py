@@ -11,7 +11,6 @@ from numpy import asarray
 
 from get_agent import ACTION_DICT
 
-
 from skimage import img_as_ubyte
 import imageio
 
@@ -97,12 +96,12 @@ def mark_agent(img, action=None, text=None, position=None, color=255, thickness=
     cv2.rectangle(img2, top_left, bottom_right, color, thickness)
 
     """add action text"""
-    if action or text:
+    if (action is not None) or text:
         font = ImageFont.truetype('Roboto-Regular.ttf', 20)
         text = text or f'Chosen action: {ACTION_DICT[action]}'
         image = Image.fromarray(img2, 'RGB')
         draw = ImageDraw.Draw(image)
-        draw.text((40,40), text, (255, 255, 255), font=font)
+        draw.text((40, 40), text, (255, 255, 255), font=font)
         img_array = asarray(image)
         return img_array
 

@@ -24,7 +24,8 @@ def train_agent(env_config_path, agent_config_path, num_episodes):
     f1, f2 = open(env_config_path), open(agent_config_path)
     env_config, agent_config = json.load(f1), json.load(f2)
     env, agent = config(env_config, agent_config)
-    evaluation = MyEvaluation(env, agent, output_dir='agents', num_episodes=num_episodes, display_env=False)
+    evaluation = MyEvaluation(env, agent, output_dir='agents', num_episodes=num_episodes,
+                              display_env=False)
     evaluation.train()
     return evaluation
 
@@ -32,15 +33,17 @@ def train_agent(env_config_path, agent_config_path, num_episodes):
 def load_agent(load_path, num_episodes):
     """load agent"""
     config_filename = [x for x in listdir(load_path) if "metadata" in x][0]
-    f = open(join(load_path,config_filename))
+    f = open(join(load_path, config_filename))
     config_dict = json.load(f)
     env_config, agent_config, = config_dict['env'], config_dict['agent']
     env, agent = config(env_config, agent_config)
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
-    evaluation = MyEvaluation(env, agent, num_episodes=num_episodes, display_env=True, output_dir='agents')
+    evaluation = MyEvaluation(env, agent, num_episodes=num_episodes, display_env=True,
+                              output_dir='agents')
     agent_path = Path(join(load_path, 'checkpoint-final.tar'))
     evaluation.load_agent_model(agent_path)
     return evaluation
+
 
 def test_agent(evaluation):
     evaluation.test()
@@ -58,17 +61,18 @@ if __name__ == '__main__':
     parser.add_argument('-load', '--load_path', help='path to pre-trained agent', default=None)
     parser.add_argument('-a_cnfg', '--agent_config', help='path to env config file', default=None)
     parser.add_argument('-e_cnfg', '--env_config', help='path to env config file', default=None)
-    parser.add_argument('-n_ep', '--num_episodes', help='number of episodes to run for test or train', default=3, type=int)
+    parser.add_argument('-n_ep', '--num_episodes',
+                        help='number of episodes to run for test or train', default=3, type=int)
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
     #
-    # env_config = "clearLane"
-    # agent_config = "dueling_ddqn"
+    env_config = "fastRight"
+    agent_config = "ddqn"
     # agent = 'safe'
-    # # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
-    # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
-    # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
-    # args.eval = True
-    # args.num_episodes = 10
+    # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
+    args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
+    args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
+    args.eval = True
+    args.num_episodes = 10
 
     main(args)

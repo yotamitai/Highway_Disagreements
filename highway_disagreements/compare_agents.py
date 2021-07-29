@@ -9,6 +9,7 @@ from numpy import argmax
 from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
     DisagreementTrace, State, make_same_length
 from get_agent import get_agent
+from highway_disagreements.get_trajectories import rank_trajectories
 from highway_disagreements.side_by_side import side_by_side_video
 from highway_disagreements.agent_score import agent_assessment
 from highway_disagreements.logging_info import get_logging, log
@@ -21,8 +22,8 @@ def online_comparison(args):
     """get agents and environments"""
     env1, a1 = get_agent(args.a1_path)
     _, a2 = get_agent(args.a2_path)
-    env1.args = args
     env2 = deepcopy(env1)
+    env1.args = env2.args = args
 
     """agent assessment"""
     agent_ratio = 1
@@ -35,42 +36,30 @@ def online_comparison(args):
         log(f'Running Episode number: {e}', args.verbose)
         trace = DisagreementTrace(e, args.horizon, agent_ratio)
         curr_obs, _ = env1.reset(), env2.reset()
-        a1.previous_state = curr_obs
-        """get initial state"""
+        assert curr_obs.tolist() == _.tolist(), f'Nonidentical environment'
+        a1.previous_state = a2.previous_state = curr_obs
         t, r, done = 0, 0, False
-        curr_s = curr_obs
-        a1_s_a_values = a1.get_state_action_values(curr_obs)
-        a2_s_a_values = a2.get_state_action_values(curr_obs)
-        frame = env1.render(mode='rgb_array')
-        state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
-        a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
-        trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
         while not done:
+            curr_s = curr_obs
+            a1_s_a_values = a1.get_state_action_values(curr_obs)
+            a2_s_a_values = a2.get_state_action_values(curr_obs)
+            frame = env1.render(mode='rgb_array')
+            state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
+            a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
+            trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
             """check for disagreement"""
             if a1_a != a2_a:
-                log(f'\tDisagreement at step {t}', args.verbose)
+                log(f'\tDisagreement at step {t}:\t\t A1: {a1_a} Vs. A2: {a2_a}', args.verbose)
                 copy_env2 = deepcopy(env2)
                 disagreement(t, trace, env2, a2, curr_s, a1)
                 """return agent 2 to the disagreement state"""
                 env2 = copy_env2
             """Transition both agent's based on agent 1 action"""
-            new_obs, r, done, info = env1.step(a1_a)
+            curr_obs, r, done, info = env1.step(a1_a)
             _ = env2.step(a1_a)  # dont need returned values
-            assert new_obs.tolist() == _[0].tolist(), f'Nonidentical environment transition'
-            new_s = new_obs
-            """get new state"""
+            assert curr_obs.tolist() == _[0].tolist(), f'Nonidentical environment transition'
             t += 1
-            new_a1_s_a_values = a1.get_state_action_values(new_s)
-            new_a2_s_a_values = a2.get_state_action_values(new_s)
-            new_frame = env1.render(mode='rgb_array')
-            new_state = State(t, e, new_obs, new_s, new_a1_s_a_values, new_frame)
-            a1_a = a1.act(new_s)
-            a2_a = a2.act(curr_s)
-            """update trace"""
-            trace.update(new_state, new_obs, a1_a, new_a1_s_a_values,
-                         new_a2_s_a_values, r, done, info)
-            """update params for next iteration"""
-            curr_s = new_s
+
         """end of episode"""
         trace.get_trajectories()
         traces.append(deepcopy(trace))
@@ -81,35 +70,15 @@ def online_comparison(args):
     return traces
 
 
-def rank_trajectories(traces, importance_type, state_importance, traj_importance):
-    for trace in traces:
-        #TODO solve problem for when all q-values are negative!
-        a1_q_max, a2_q_max = trace.a1_max_q_val, trace.a2_max_q_val
-        for i, trajectory in enumerate(trace.disagreement_trajectories):
-            if importance_type == 'state':
-                importance = trajectory.calculate_state_importance(state_importance, a1_q_max,
-                                                                   a2_q_max)
-            else:
-                # TODO check that all importance criteria work
-                importance = trajectory.calculate_trajectory_importance(trace, i, traj_importance,
-                                                                        state_importance,
-                                                                        a1_q_max, a2_q_max)
-            trajectory.importance = importance
-
-
 def main(args):
     name, file_name = get_logging(args)
     traces = load_traces(args.traces_path) if args.traces_path else online_comparison(args)
     log(f'Obtained traces', args.verbose)
 
     """save traces"""
-    # TODO check if json works better than pickle
     output_dir = join(args.results_dir, file_name)
     save_traces(traces, output_dir)
     log(f'Saved traces', args.verbose)
-
-    """normalize q-values for agents"""
-    # normalize_q_values(traces)
 
     """rank disagreement trajectories by importance measures"""
     rank_trajectories(traces, args.importance_type, args.state_importance,
@@ -137,8 +106,6 @@ def main(args):
         a2_disagreement_frames.append(a2_frames)
 
     """save disagreement frames"""
-    # video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames, output_dir,
-    #                                args.fps)
     video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
                                    output_dir, args.fps)
     log(f'Disagreements saved', args.verbose)
@@ -185,33 +152,29 @@ if __name__ == '__main__':
                         default=None)
     args = parser.parse_args()
 
-    """experiment parameters"""
-    # args.fps = 1
 
-    # args.show_score_bar = False
-    # args.n_disagreements = 5
-    # args.randomized = True
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
     args.state_importance = "bety"  # "sb" "bety"
-    args.trajectory_importance = "last_state"  # last_state, max_min, max_avg, avg, avg_delta
+    args.trajectory_importance = "avg"  # last_state, max_min, max_avg, avg, avg_delta
     args.importance_type = 'trajectory'  # state/trajectory
 
     """"""
     args.verbose = False
     args.horizon = 30
     args.fps = 5
-    args.num_episodes = 2
+    args.num_episodes = 5
+    # args.randomized = True
 
     args.a1_name = 'safe'
-    args.a2_name = 'fast'
+    args.a2_name = 'rightLane'
     # args.a1_path = f'../agents/Saved_Agents/{args.a1_name}'
     # args.a2_path = f'../agents/Saved_Agents/{args.a2_name}'
-    args.a1_path = f'../agents/Server_halfway/{args.a1_name}'
-    args.a2_path = f'../agents/Server_halfway/{args.a2_name}'
+    args.a1_path = f'../agents/Server/{args.a1_name}'
+    args.a2_path = f'../agents/Server/{args.a2_name}'
     args.results_dir = abspath('results')
-    args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-28_17:40:10_safe-fast" # None
+    # args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-29_09:18:27_safe-fast" # None
 
     """RUN"""
     main(args)
