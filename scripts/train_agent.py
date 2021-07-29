@@ -65,14 +65,15 @@ if __name__ == '__main__':
                         help='number of episodes to run for test or train', default=3, type=int)
     parser.add_argument('-eval', '--eval', help='run evaluation', default=False)
     args = parser.parse_args()
-    #
-    env_config = "fastRight"
-    agent_config = "ddqn"
-    # agent = 'safe'
-    # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
-    args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
-    args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
-    args.eval = True
-    args.num_episodes = 10
+
+
+    # env_config = "fastRight"
+    # agent_config = "ddqn"
+    # # agent = 'safe'
+    # # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
+    # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
+    # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
+    # args.eval = True
+    # args.num_episodes = 10
 
     main(args)
