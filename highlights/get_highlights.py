@@ -135,8 +135,8 @@ if __name__ == '__main__':
     args.results_dir = abspath('results')
 
     # RUN
-    agent = 'test'
-    args.load_path = f'../agents/Saved_Agents/{agent}'
+    agent = 'ClearLane'
+    args.load_path = f'../agents/Current/{agent}/DQNAgent/run_20210729-160525_37182'
     # args.agent_path = f'../agents/Saved_Agents/{agent}/checkpoint-best.tar'
     # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{agent}.json')
     # args.env_id = "fastRight-v0"

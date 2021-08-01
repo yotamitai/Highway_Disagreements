@@ -13,9 +13,9 @@ from rl_agents.agents.common.factory import agent_factory
 
 def config(env_config, agent_config):
     env = gym.make(env_config["env_id"])
-    agent = agent_factory(env, agent_config)
     env.configure(env_config)
     env.define_spaces()
+    agent = agent_factory(env, agent_config)
     return env, agent
 
 
@@ -67,13 +67,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    # env_config = "fastRight"
-    # agent_config = "ddqn"
-    # # agent = 'safe'
-    # # args.load_path = abspath(f'agents/From_Server/{agent}') # /checkpoint-final.tar'
-    # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
-    # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
-    # args.eval = True
-    # args.num_episodes = 10
+    env_config = "FastRight"
+    agent_config = "ddqn"
+    agent = 'safe'
+    args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
+    args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
+    args.eval = True
+    args.num_episodes = 10
+
+    # args.load_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/agents/Current/OnlySafe/DQNAgent/run_20210729-160525_37184'
 
     main(args)

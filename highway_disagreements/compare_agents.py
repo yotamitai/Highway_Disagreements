@@ -164,15 +164,15 @@ if __name__ == '__main__':
     args.verbose = False
     args.horizon = 30
     args.fps = 5
-    args.num_episodes = 5
+    args.num_episodes = 2
     # args.randomized = True
 
-    args.a1_name = 'safe'
-    args.a2_name = 'rightLane'
+    args.a1_name = 'OnlySpeed'
+    args.a2_name = 'ClearLane'
     # args.a1_path = f'../agents/Saved_Agents/{args.a1_name}'
     # args.a2_path = f'../agents/Saved_Agents/{args.a2_name}'
-    args.a1_path = f'../agents/Server/{args.a1_name}'
-    args.a2_path = f'../agents/Server/{args.a2_name}'
+    args.a1_path = f'../agents/Current/{args.a1_name}/DQNAgent/run_20210729-160525_37180'
+    args.a2_path = f'../agents/Current/{args.a2_name}/DQNAgent/run_20210729-160525_37182'
     args.results_dir = abspath('results')
     # args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-29_09:18:27_safe-fast" # None
 

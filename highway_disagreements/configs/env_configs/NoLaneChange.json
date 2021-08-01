@@ -6,7 +6,7 @@
   "action": {
       "type": "DiscreteMetaAction"
   },
-  "env_id": "rightLane-v0",
+  "env_id": "NoLaneChange-v0",
   "offscreen_rendering": true,
   "simulation_frequency": 20,
   "policy_frequency": 10,
@@ -15,12 +15,11 @@
   "controlled_vehicles": 1,
   "initial_lane_id": null,
   "duration": 200,
-  "ego_spacing": 1,
+  "ego_spacing": 2,
   "vehicles_density": 2,
-  "reward_speed_range": [10, 30],
+  "reward_speed_range": [10, 40],
   "offroad_terminal": false,
   "collision_reward": -10,
-  "right_lane_reward": 1,
-  "high_speed_reward": 0,
-  "lane_change_reward": 0
+  "high_speed_reward": 1,
+  "lane_change_reward": -1
 }
