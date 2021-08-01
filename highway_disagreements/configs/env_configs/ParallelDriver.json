@@ -18,5 +18,6 @@
   "ego_spacing": 2,
   "vehicles_density": 2,
   "offroad_terminal": false,
-  "collision_reward": -10
+  "collision_reward": -1,
+  "distance_reward": 1
 }

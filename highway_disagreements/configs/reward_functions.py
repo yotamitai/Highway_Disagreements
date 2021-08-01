@@ -24,10 +24,14 @@ class ParallelDriver(HighwayEnvMinSpeed):
         obs = self.observation_type.observe()
         other_cars = obs[1:]
         # closest car that is not in same lane
-        target_car_x_dist = [car[1] for car in other_cars if abs(car[2]) > 0.1][0]
-        reward = 1 - target_car_x_dist \
-                 + self.config["collision_reward"] * self.vehicle.crashed
-        reward = lmap(reward, [self.config["collision_reward"], 1], [0, 1])
+        cars_x_dist = [car[1] for car in other_cars if abs(car[2]) > 0.1]
+        closest_car = 1 - lmap(min(cars_x_dist), [0, 0.4], [0, 1]) if cars_x_dist \
+            else 0
+        reward = \
+            + self.config["distance_reward"] * closest_car \
+            + self.config["collision_reward"] * self.vehicle.crashed
+        reward = lmap(reward, [self.config["collision_reward"], self.config["distance_reward"]],
+                      [0, 1])
         reward = 0 if not self.vehicle.on_road else reward
         return reward
 
@@ -43,14 +47,16 @@ class SocialDistance(HighwayEnvMinSpeed):
 
     def _reward(self, action: Action) -> float:
         other_cars = self.observation_type.observe()[1:]
-        relativity = list(range(len(other_cars), 0, -1))
-        x_reward = y_reward = 0
+        dist = 0
+        max_dist = math.sqrt(0.4 ** 2 + 0.75 ** 2) # max in x and y coords relative to agent
         for i, car in enumerate(other_cars):
-            x_reward += abs(car[1]) * relativity[i]
-            y_reward += abs(car[2]) * relativity[i]
-        reward = lmap(y_reward, [0, 7.5], [0, 1]) + lmap(x_reward, [0, 4], [0, 1]) \
-                 + self.config["collision_reward"] * self.vehicle.crashed
-        reward = lmap(reward, [self.config["collision_reward"], 2], [0, 1])
+            dist += math.sqrt(abs(car[1]) ** 2 + abs(car[2]) ** 2)
+        scaled_dist = lmap(dist, [0, 4 * max_dist], [0, 1])
+        reward = \
+            + self.config['distance_reward'] * scaled_dist \
+            + self.config["collision_reward"] * self.vehicle.crashed
+        reward = lmap(reward, [self.config["collision_reward"], self.config['distance_reward']],
+                      [0, 1])
         reward = 0 if not self.vehicle.on_road else reward
         return reward
 
@@ -94,14 +100,14 @@ class ClearLane(HighwayEnv):
         other_cars = obs[1:]
         dist_cars_in_front = [x[1] for x in other_cars if x[1] > 0 and abs(x[2]) <= 0.05]
         closest_car = lmap(min(dist_cars_in_front), [0, 0.4], [0, 1]) if dist_cars_in_front \
-            else 0
+            else 1
         reward = \
-            + self.config["reward_speed_range"] * scaled_speed \
-            + self.config["keep_distance_reward"] * closest_car \
+            + self.config["high_speed_reward"] * scaled_speed \
+            + self.config["distance_reward"] * closest_car \
             + self.config["collision_reward"] * self.vehicle.crashed
         reward = lmap(reward,
                       [self.config["collision_reward"],
-                       self.config["keep_distance_reward"] + self.config["reward_speed_range"]],
+                       self.config["distance_reward"] + self.config["high_speed_reward"]],
                       [0, 1])
         return reward
 
@@ -138,6 +144,6 @@ class FastRight(HighwayEnv):
 
 
 register(
-    id='fastRight-v0',
+    id='FastRight-v0',
     entry_point='highway_disagreements.configs.reward_functions:FastRight',
 )
