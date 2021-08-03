@@ -17,9 +17,8 @@
   "duration": 200,
   "ego_spacing": 2,
   "vehicles_density": 2,
-  "reward_speed_range": [10, 40],
   "offroad_terminal": false,
-  "collision_reward": -1,
-  "high_speed_reward": 1,
-  "lane_change_reward": -1
+  "collision_reward": -10,
+  "keep_distance_reward": 1,
+  "lane_change_reward": -2
 }

@@ -67,14 +67,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    # env_config = "SocialDistance"
+    # env_config = "FastRight"
     # agent_config = "ddqn"
     # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
     # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
-    # args.eval = True
-    # args.num_episodes = 2
 
-    # agent = 'safe'
-    # args.load_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/agents/Current/OnlySafe/DQNAgent/run_20210729-160525_37184'
+
+    # args.load_path = 'agents/Last_Chance/ParallelDriver/DUELING'
+    # args.eval = True
+
+    # args.num_episodes = 4
+
 
     main(args)
