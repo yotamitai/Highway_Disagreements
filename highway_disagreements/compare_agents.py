@@ -71,13 +71,12 @@ def online_comparison(args):
 
 
 def main(args):
-    name, file_name = get_logging(args)
+    name = get_logging(args)
     traces = load_traces(args.traces_path) if args.traces_path else online_comparison(args)
     log(f'Obtained traces', args.verbose)
 
     """save traces"""
-    output_dir = join(args.results_dir, file_name)
-    save_traces(traces, output_dir)
+    save_traces(traces, args.output)
     log(f'Saved traces', args.verbose)
 
     """rank disagreement trajectories by importance measures"""
@@ -107,7 +106,7 @@ def main(args):
 
     """save disagreement frames"""
     video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
-                                   output_dir, args.fps)
+                                   args.output, args.fps)
     log(f'Disagreements saved', args.verbose)
 
     """generate video"""
@@ -117,7 +116,7 @@ def main(args):
     log(f'DAs Video Generated', args.verbose)
 
     """ writes results to files"""
-    log(f'\nResults written to:\n\t\'{output_dir}\'', args.verbose)
+    log(f'\nResults written to:\n\t\'{args.output}\'', args.verbose)
 
 
 if __name__ == '__main__':
@@ -167,12 +166,10 @@ if __name__ == '__main__':
     args.num_episodes = 2
     # args.randomized = True
 
-    args.a1_name = 'OnlySpeed'
+    args.a1_name = 'ParallelDriver'
     args.a2_name = 'ClearLane'
-    # args.a1_path = f'../agents/Saved_Agents/{args.a1_name}'
-    # args.a2_path = f'../agents/Saved_Agents/{args.a2_name}'
-    args.a1_path = f'../agents/Current/{args.a1_name}/DQNAgent/run_20210729-160525_37180'
-    args.a2_path = f'../agents/Current/{args.a2_name}/DQNAgent/run_20210729-160525_37182'
+    args.a1_path = f'../agents/TheOne/{args.a1_name}'
+    args.a2_path = f'../agents/TheOne/{args.a2_name}'
     args.results_dir = abspath('results')
     # args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-29_09:18:27_safe-fast" # None
 

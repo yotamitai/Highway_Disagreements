@@ -1,6 +1,8 @@
 import argparse
+import json
 from datetime import datetime
 import random
+from pathlib import Path
 
 import gym
 import pandas as pd
@@ -8,7 +10,7 @@ from os.path import join, basename, abspath
 
 from highway_disagreements.get_agent import get_agent
 from get_traces import get_traces
-from highlights.utils import create_video, make_clean_dirs, pickle_save
+from highlights.utils import create_video, make_clean_dirs, pickle_save, pickle_load
 from highlights_state_selection import compute_states_importance, highlights, highlights_div
 from get_trajectories import states_to_trajectories, trajectories_by_importance, \
     get_trajectory_images
@@ -17,12 +19,20 @@ from ffmpeg import merge_and_fade
 
 def get_highlights(args):
     args.output_dir = join(abspath('results'), '_'.join(
-        [args.name, datetime.now().strftime("%H:%M:%S_%d-%m-%Y")]))
+        [datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '_'), args.name]))
     make_clean_dirs(args.output_dir)
+    with Path(join(args.output_dir,'metadata.json')).open('w') as f:
+        json.dump(vars(args), f, sort_keys=True, indent=4)
 
-    env, agent = get_agent(args.load_path)
-    env.args = args
-    traces, states = get_traces(env, agent, args)
+    if args.load_dir:
+        """Load traces and state dictionary"""
+        traces = pickle_load(join(args.load_dir, 'Traces.pkl'))
+        states = pickle_load(join(args.load_dir, 'States.pkl'))
+        if args.verbose: print(f"Highlights {15 * '-' + '>'} Traces & States Loaded")
+    else:
+        env, agent = get_agent(args.load_path)
+        env.args = args
+        traces, states = get_traces(env, agent, args)
 
     """highlights algorithm"""
     data = {
@@ -82,7 +92,7 @@ def get_highlights(args):
     pickle_save(all_trajectories, join(args.output_dir, 'Trajectories.pkl'))
     if args.verbose: print(f"Highlights {15 * '-' + '>'} Run Configurations Saved")
 
-    env.close()
+    if not args.load_dir: env.close()
     # del gym.configs.registration.registry.env_specs[env.spec.id]
 
 
@@ -117,7 +127,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """Highlight parameters"""
-    args.n_traces = 10
+    args.n_traces = 2
     args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
     args.num_trajectories = 5
@@ -130,13 +140,13 @@ if __name__ == '__main__':
     args.randomized = True
     args.fps = 10
     args.verbose = True
-    args.load_dir = False #abspath('results/safe_10:39:01_21-07-2021')
     args.load_trajectories = False
     args.results_dir = abspath('results')
 
     # RUN
     agent = 'ClearLane'
-    args.load_path = f'../agents/Current/{agent}/DQNAgent/run_20210729-160525_37182'
+    args.load_dir = abspath('results/ClearLane_09:48:40_04-08-2021')
+    # args.load_path = f'results/ClearLane_09:48:40_04-08-2021'
     # args.agent_path = f'../agents/Saved_Agents/{agent}/checkpoint-best.tar'
     # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{agent}.json')
     # args.env_id = "fastRight-v0"

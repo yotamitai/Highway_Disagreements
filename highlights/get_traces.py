@@ -10,22 +10,15 @@ def get_traces(environment, agent, args):
     kwargs: args of agent
     args: args of highlights algorithm
     """
-    if args.load_dir:
-        """Load traces and state dictionary"""
-        execution_traces = pickle_load(join(args.load_dir, 'Traces.pkl'))
-        states_dictionary = pickle_load(join(args.load_dir, 'States.pkl'))
-        if args.verbose: print(f"Highlights {15 * '-' + '>'} Traces & States Loaded")
-    else:
-        """Obtain traces and state dictionary"""
-        execution_traces, states_dictionary = [], {}
-        for i in range(args.n_traces):
-            get_single_trace(environment, agent, i, execution_traces, states_dictionary, args)
-            if args.verbose: print(f"\tTrace {i} {15 * '-' + '>'} Obtained")
-        """save to results dir"""
-        pickle_save(execution_traces, join(args.results_dir, 'Traces.pkl'))
-        pickle_save(states_dictionary, join(args.results_dir, 'States.pkl'))
-        if args.verbose: print(f"Highlights {15 * '-' + '>'} Traces & States Generated")
-
+    """Obtain traces and state dictionary"""
+    execution_traces, states_dictionary = [], {}
+    for i in range(args.n_traces):
+        get_single_trace(environment, agent, i, execution_traces, states_dictionary, args)
+        if args.verbose: print(f"\tTrace {i} {15 * '-' + '>'} Obtained")
+    """save to results dir"""
+    pickle_save(execution_traces, join(args.results_dir, 'Traces.pkl'))
+    pickle_save(states_dictionary, join(args.results_dir, 'States.pkl'))
+    if args.verbose: print(f"Highlights {15 * '-' + '>'} Traces & States Generated")
     return execution_traces, states_dictionary
 
 

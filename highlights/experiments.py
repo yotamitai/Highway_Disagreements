@@ -34,15 +34,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """Highlight parameters"""
-    args.n_traces = 30
-    args.num_trajectories = 5
-    args.trajectory_length = 20
     args.fade_duration = 2
     args.minimum_gap = 0
     args.overlay_limit = 5
     args.allowed_similar_states = 3
     args.randomized = False
-    args.fps = 5
     args.verbose = True
     args.load_dir = False #abspath('results/safe_10:39:01_21-07-2021')
     args.load_trajectories = False
@@ -56,14 +52,16 @@ if __name__ == '__main__':
     #     "FastRight": 'run_20210729-160524_37188',
     #     "RightLane": 'run_20210729-160525_37181'
     # }
-
+    args.n_traces = 30
+    args.num_trajectories = 5
+    args.trajectory_length = 30
+    args.fps = 7
     args.trajectory_importance = "single_state"  # single_state
-    args.state_importance = "second"
+    args.state_importance = "worst"
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
 
     for agent in ["ClearLane", "FastRight", "SocialDistance", "NoLaneChange", "ParallelDriver"]:
         args.name = agent
-        args.load_path = f'../agents/Last_Chance/{agent}/DDQN'
+        args.load_path = f'../agents/TheOne/{agent}'
         get_highlights(args)
-        args.load_path = f'../agents/Last_Chance/{agent}/DUELING'
-        get_highlights(args)
+

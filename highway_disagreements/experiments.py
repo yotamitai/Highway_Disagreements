@@ -36,7 +36,6 @@ if __name__ == '__main__':
                         default=None)
     args = parser.parse_args()
 
-
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
@@ -46,21 +45,22 @@ if __name__ == '__main__':
 
     """"""
     args.verbose = False
-    args.horizon = 20
+    args.horizon = 30
     args.fps = 5
     args.num_episodes = 3
     args.randomized = True
     args.results_dir = abspath('results')
 
-    agents = {
-        "OnlySpeed": "run_20210729-160525_37180",
-        "ClearLane": "run_20210729-160525_37182",
-        "OnlySafe": 'run_20210729-160525_37184',
-        "FastRight": 'run_20210729-160524_37188',
-        "RightLane": 'run_20210729-160525_37181'
-    }
+    # agents = {
+    #     "OnlySpeed": "run_20210729-160525_37180",
+    #     "ClearLane": "run_20210729-160525_37182",
+    #     "OnlySafe": 'run_20210729-160525_37184',
+    #     "FastRight": 'run_20210729-160524_37188',
+    #     "RightLane": 'run_20210729-160525_37181'
+    # }
+    agents = ["ClearLane", "FastRight", "SocialDistance", "NoLaneChange", "ParallelDriver"]
     """RUN"""
-    for a1,a2 in permutations(agents.keys(),2):
+    for a1, a2 in permutations(agents, 2):
         args.a1_name = a1
         args.a2_name = a2
         args.a1_path = f'../agents/Current/{args.a1_name}/DQNAgent/{agents[a1]}'

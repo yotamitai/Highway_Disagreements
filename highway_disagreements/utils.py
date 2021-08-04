@@ -20,11 +20,8 @@ def load_traces(path):
 
 
 def save_traces(traces, output_dir):
-    os.makedirs(output_dir)
+    make_clean_dirs(output_dir, no_clean=True)
     pickle_save(traces, join(output_dir, 'Traces.pkl'))
-    # TODO save and load as json for reduced space, requires loading scheme for specific classes
-    # from rl_agents.configuration import serialize
-    # json_save([dict(trace=serialize(trace)) for trace in traces], join(output_dir, 'Traces.json'))
 
 
 def pickle_load(filename):

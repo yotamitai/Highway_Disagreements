@@ -69,14 +69,12 @@ if __name__ == '__main__':
 
     # env_config = "FastRight"
     # agent_config = "ddqn"
-    # args.agent_config = abspath(f'highway_disagreements/configs/agent_configs/{agent_config}.json')
+    # args.agent_config = abspath(f'highway_disagreements/configs/agent_conefigs/{agent_config}.json')
     # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
 
+    args.load_path = 'agents/TheOne/FastRight'
+    args.eval = True
 
-    # args.load_path = 'agents/Last_Chance/ParallelDriver/DUELING'
-    # args.eval = True
-
-    # args.num_episodes = 4
-
+    args.num_episodes = 4
 
     main(args)
