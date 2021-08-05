@@ -26,7 +26,6 @@ def highlights(state_importance_df, exec_traces, budget, context_length, minimum
     for index, row in sorted_df.iterrows():
         state = row['state']
 
-        """unique score for frogger"""
         if row["importance"] in seen_importance:
             continue
         else:

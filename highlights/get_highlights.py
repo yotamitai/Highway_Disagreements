@@ -30,7 +30,7 @@ def get_highlights(args):
         states = pickle_load(join(args.load_dir, 'States.pkl'))
         if args.verbose: print(f"Highlights {15 * '-' + '>'} Traces & States Loaded")
     else:
-        env, agent = get_agent(args.load_path)
+        env, agent, _ = get_agent(args.load_path)
         env.args = args
         traces, states = get_traces(env, agent, args)
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     # RUN
     agent = 'ClearLane'
-    args.load_dir = abspath('results/ClearLane_09:48:40_04-08-2021')
+    args.load_dir = abspath('results/2021-08-04_12:27:19_SocialDistance')
     # args.load_path = f'results/ClearLane_09:48:40_04-08-2021'
     # args.agent_path = f'../agents/Saved_Agents/{agent}/checkpoint-best.tar'
     # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{agent}.json')

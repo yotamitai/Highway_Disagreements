@@ -45,9 +45,9 @@ if __name__ == '__main__':
 
     """"""
     args.verbose = False
-    args.horizon = 30
-    args.fps = 5
-    args.num_episodes = 3
+    args.horizon = 20
+    args.fps = 7
+    args.num_episodes = 5
     args.randomized = True
     args.results_dir = abspath('results')
 
@@ -58,11 +58,11 @@ if __name__ == '__main__':
     #     "FastRight": 'run_20210729-160524_37188',
     #     "RightLane": 'run_20210729-160525_37181'
     # }
-    agents = ["ClearLane", "FastRight", "SocialDistance", "NoLaneChange", "ParallelDriver"]
+    agents = ["SocialDistance", "NoLaneChange", "ParallelDriver", "ClearLane", "FastRight"]
     """RUN"""
     for a1, a2 in permutations(agents, 2):
         args.a1_name = a1
         args.a2_name = a2
-        args.a1_path = f'../agents/Current/{args.a1_name}/DQNAgent/{agents[a1]}'
-        args.a2_path = f'../agents/Current/{args.a2_name}/DQNAgent/{agents[a2]}'
+        args.a1_path = f'../agents/TheOne/{a1}'
+        args.a2_path = f'../agents/TheOne/{a2}'
         main(args)

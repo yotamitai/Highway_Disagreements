@@ -1,7 +1,6 @@
 import argparse
 import random
-from os.path import abspath
-from os.path import join
+from os.path import join, abspath
 
 import numpy as np
 from numpy import argmax
@@ -20,8 +19,8 @@ from copy import deepcopy
 def online_comparison(args):
     """Compare two agents running online, search for disagreements"""
     """get agents and environments"""
-    env1, a1 = get_agent(args.a1_path)
-    _, a2 = get_agent(args.a2_path)
+    env1, a1, evaluation1 = get_agent(args.a1_path)
+    _, a2, evaluation2 = get_agent(args.a2_path)
     env2 = deepcopy(env1)
     env1.args = env2.args = args
 
@@ -39,14 +38,15 @@ def online_comparison(args):
         assert curr_obs.tolist() == _.tolist(), f'Nonidentical environment'
         a1.previous_state = a2.previous_state = curr_obs
         t, r, done = 0, 0, False
+        """initial state"""
+        curr_s = curr_obs
+        a1_s_a_values = a1.get_state_action_values(curr_obs)
+        a2_s_a_values = a2.get_state_action_values(curr_obs)
+        frame = env1.render(mode='rgb_array')
+        state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
+        a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
+        trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
         while not done:
-            curr_s = curr_obs
-            a1_s_a_values = a1.get_state_action_values(curr_obs)
-            a2_s_a_values = a2.get_state_action_values(curr_obs)
-            frame = env1.render(mode='rgb_array')
-            state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
-            a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
-            trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
             """check for disagreement"""
             if a1_a != a2_a:
                 log(f'\tDisagreement at step {t}:\t\t A1: {a1_a} Vs. A2: {a2_a}', args.verbose)
@@ -55,10 +55,17 @@ def online_comparison(args):
                 """return agent 2 to the disagreement state"""
                 env2 = copy_env2
             """Transition both agent's based on agent 1 action"""
+            t += 1
             curr_obs, r, done, info = env1.step(a1_a)
             _ = env2.step(a1_a)  # dont need returned values
             assert curr_obs.tolist() == _[0].tolist(), f'Nonidentical environment transition'
-            t += 1
+            curr_s = curr_obs
+            a1_s_a_values = a1.get_state_action_values(curr_obs)
+            a2_s_a_values = a2.get_state_action_values(curr_obs)
+            frame = env1.render(mode='rgb_array')
+            state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame)
+            a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
+            trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {})
 
         """end of episode"""
         trace.get_trajectories()
@@ -67,6 +74,8 @@ def online_comparison(args):
     """close environments"""
     env1.close()
     env2.close()
+    evaluation1.close()
+    evaluation2.close()
     return traces
 
 
@@ -80,11 +89,13 @@ def main(args):
     log(f'Saved traces', args.verbose)
 
     """rank disagreement trajectories by importance measures"""
-    rank_trajectories(traces, args.importance_type, args.state_importance,
-                      args.trajectory_importance)
+    rank_trajectories(traces, args.importance)
 
     """top k diverse disagreements"""
     disagreements = get_top_k_disagreements(traces, args)
+    if not disagreements:
+        log(f'No disagreements found', args.verbose)
+        return
     log(f'Obtained {len(disagreements)} disagreements', args.verbose)
 
     """make all trajectories the same length"""
@@ -119,6 +130,7 @@ def main(args):
     log(f'\nResults written to:\n\t\'{args.output}\'', args.verbose)
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Agent Comparisons')
     parser.add_argument('-env', '--env_id', help='environment name', default="fastRight-v0")
@@ -136,17 +148,13 @@ if __name__ == '__main__':
                         type=int, default=5)
     parser.add_argument('-overlaplim', '--similarity_limit', help='# overlaping',
                         type=int, default=3)
-    parser.add_argument('-impMeth', '--importance_type',
-                        help='importance by state or trajectory', default='trajectory')
-    parser.add_argument('-impTraj', '--trajectory_importance',
-                        help='method calculating trajectory importance', default='last_state')
-    parser.add_argument('-impState', '--state_importance',
-                        help='method calculating state importance', default='bety')
+    parser.add_argument('-imp', '--importance',
+                        help='importance method', default='last_state')
     parser.add_argument('-v', '--verbose', help='print information to the console', default=True)
     parser.add_argument('-ass', '--agent_assessment', help='apply agent ratio by agent score',
                         default=False)
     parser.add_argument('-se', '--seed', help='environment seed', default=0)
-    parser.add_argument('-res', '--results_dir', help='results directory', default='results')
+    parser.add_argument('-res', '--results_dir', help='results directory', default=abspath('results'))
     parser.add_argument('-tr', '--traces_path', help='path to traces file if exists',
                         default=None)
     args = parser.parse_args()
@@ -154,24 +162,24 @@ if __name__ == '__main__':
 
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
-    """importance measures"""
-    args.state_importance = "bety"  # "sb" "bety"
-    args.trajectory_importance = "avg"  # last_state, max_min, max_avg, avg, avg_delta
-    args.importance_type = 'trajectory'  # state/trajectory
+    """importance"""
+    args.importance = "last_state"
+    # traj: last_state, max_min, max_avg, avg, avg_delta
+    # state: sb, bety
 
     """"""
     args.verbose = False
-    args.horizon = 30
-    args.fps = 5
-    args.num_episodes = 2
+    args.horizon = 20
+    args.fps = 7
+    args.num_episodes = 1
     # args.randomized = True
 
-    args.a1_name = 'ParallelDriver'
-    args.a2_name = 'ClearLane'
-    args.a1_path = f'../agents/TheOne/{args.a1_name}'
-    args.a2_path = f'../agents/TheOne/{args.a2_name}'
-    args.results_dir = abspath('results')
-    # args.traces_path = "/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highway_disagreements/results/2021-07-29_09:18:27_safe-fast" # None
+    # args.a1_name = 'FastRight'
+    # args.a2_name = 'SocialDistance'
+    # args.a1_path = f'../agents/TheOne/{args.a1_name}'
+    # args.a2_path = f'../agents/TheOne/{args.a2_name}'
+
+    args.traces_path = join(abspath('results'),"2021-08-04_21:32:15_FastRight-SocialDistance")
 
     """RUN"""
     main(args)

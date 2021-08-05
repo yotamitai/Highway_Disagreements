@@ -34,4 +34,4 @@ def get_agent(load_path, seed=0):
     evaluation = MyEvaluation(env, agent, display_env=False)
     agent_path = Path(join(load_path, 'checkpoint-final.tar'))
     evaluation.load_agent_model(agent_path)
-    return env, agent
+    return env, agent, evaluation
