@@ -39,9 +39,9 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    args.state_importance = "bety"  # "sb" "bety"
-    args.trajectory_importance = "last_state"  # last_state, max_min, max_avg, avg, avg_delta
-    args.importance_type = 'trajectory'  # state/trajectory
+    args.importance = "last_state"
+    # # traj: last_state, max_min, max_avg, avg, avg_delta
+    # # state: sb, bety
 
     """"""
     args.verbose = False
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     args.fps = 7
     args.num_episodes = 5
     args.randomized = True
-    args.results_dir = abspath('results')
+    args.results_dir = abspath('../highway_disagreements/results')
 
     # agents = {
     #     "OnlySpeed": "run_20210729-160525_37180",
@@ -63,6 +63,6 @@ if __name__ == '__main__':
     for a1, a2 in permutations(agents, 2):
         args.a1_name = a1
         args.a2_name = a2
-        args.a1_path = f'../agents/TheOne/{a1}'
-        args.a2_path = f'../agents/TheOne/{a2}'
+        args.a1_path = abspath(f'../agents/TheOne/{a1}')
+        args.a2_path = abspath(f'../agents/TheOne/{a2}')
         main(args)

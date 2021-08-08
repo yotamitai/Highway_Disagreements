@@ -1,13 +1,16 @@
 import argparse
+import json
+import os
 import random
 from os.path import join, abspath
+from pathlib import Path
 
 import numpy as np
 from numpy import argmax
 
-from disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
+from highway_disagreements.disagreement import save_disagreements, get_top_k_disagreements, disagreement, \
     DisagreementTrace, State, make_same_length
-from get_agent import get_agent
+from highway_disagreements.get_agent import get_agent
 from highway_disagreements.get_trajectories import rank_trajectories
 from highway_disagreements.side_by_side import side_by_side_video
 from highway_disagreements.agent_score import agent_assessment
@@ -15,12 +18,12 @@ from highway_disagreements.logging_info import get_logging, log
 from highway_disagreements.utils import load_traces, save_traces
 from copy import deepcopy
 
-
 def online_comparison(args):
     """Compare two agents running online, search for disagreements"""
     """get agents and environments"""
     env1, a1, evaluation1 = get_agent(args.a1_path)
     _, a2, evaluation2 = get_agent(args.a2_path)
+    args.logger.parent = None
     env2 = deepcopy(env1)
     env1.args = env2.args = args
 
@@ -32,7 +35,7 @@ def online_comparison(args):
     """Run"""
     traces = []
     for e in range(args.num_episodes):
-        log(f'Running Episode number: {e}', args.verbose)
+        log(args.logger, f'Running Episode number: {e}', args.verbose)
         trace = DisagreementTrace(e, args.horizon, agent_ratio)
         curr_obs, _ = env1.reset(), env2.reset()
         assert curr_obs.tolist() == _.tolist(), f'Nonidentical environment'
@@ -49,7 +52,7 @@ def online_comparison(args):
         while not done:
             """check for disagreement"""
             if a1_a != a2_a:
-                log(f'\tDisagreement at step {t}:\t\t A1: {a1_a} Vs. A2: {a2_a}', args.verbose)
+                log(args.logger, f'\tDisagreement at step {t}:\t\t A1: {a1_a} Vs. A2: {a2_a}', args.verbose)
                 copy_env2 = deepcopy(env2)
                 disagreement(t, trace, env2, a2, curr_s, a1)
                 """return agent 2 to the disagreement state"""
@@ -80,13 +83,13 @@ def online_comparison(args):
 
 
 def main(args):
-    name = get_logging(args)
+    name, args.logger = get_logging(args)
     traces = load_traces(args.traces_path) if args.traces_path else online_comparison(args)
-    log(f'Obtained traces', args.verbose)
+    log(args.logger, f'Obtained traces', args.verbose)
 
     """save traces"""
     save_traces(traces, args.output)
-    log(f'Saved traces', args.verbose)
+    log(args.logger, f'Saved traces', args.verbose)
 
     """rank disagreement trajectories by importance measures"""
     rank_trajectories(traces, args.importance)
@@ -94,9 +97,9 @@ def main(args):
     """top k diverse disagreements"""
     disagreements = get_top_k_disagreements(traces, args)
     if not disagreements:
-        log(f'No disagreements found', args.verbose)
+        log(args.logger, f'No disagreements found', args.verbose)
         return
-    log(f'Obtained {len(disagreements)} disagreements', args.verbose)
+    log(args.logger, f'Obtained {len(disagreements)} disagreements', args.verbose)
 
     """make all trajectories the same length"""
     disagreements = make_same_length(disagreements, args.horizon, traces)
@@ -118,16 +121,16 @@ def main(args):
     """save disagreement frames"""
     video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
                                    args.output, args.fps)
-    log(f'Disagreements saved', args.verbose)
+    log(args.logger, f'Disagreements saved', args.verbose)
 
     """generate video"""
     fade_duration = 2
     fade_out_frame = args.horizon - fade_duration + 11 # +11 from pause in save_disagreements
     side_by_side_video(video_dir, args.n_disagreements, fade_out_frame, name)
-    log(f'DAs Video Generated', args.verbose)
+    log(args.logger, f'DAs Video Generated', args.verbose)
 
     """ writes results to files"""
-    log(f'\nResults written to:\n\t\'{args.output}\'', args.verbose)
+    log(args.logger, f'\nResults written to:\n\t\'{args.output}\'', args.verbose)
 
 
 
@@ -174,12 +177,38 @@ if __name__ == '__main__':
     args.num_episodes = 1
     # args.randomized = True
 
-    # args.a1_name = 'FastRight'
-    # args.a2_name = 'SocialDistance'
-    # args.a1_path = f'../agents/TheOne/{args.a1_name}'
-    # args.a2_path = f'../agents/TheOne/{args.a2_name}'
+    args.a1_name = 'FastRight'
+    args.a2_name = 'SocialDistance'
+    args.a1_path = f'../agents/TheOne/{args.a1_name}'
+    args.a2_path = f'../agents/TheOne/{args.a2_name}'
 
-    args.traces_path = join(abspath('results'),"2021-08-04_21:32:15_FastRight-SocialDistance")
+    # args.traces_path = join(abspath('results'),"2021-08-04_21:32:15_FastRight-SocialDistance")
 
     """RUN"""
     main(args)
+
+
+
+    # base_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/DA_state_bety_6fps_20frames'
+    # directories = os.listdir(base_dir)
+    #
+    # """RUN"""
+    # parser = argparse.ArgumentParser(description='RL Agent Comparisons')
+    #
+    # for d in directories:
+    #     f = open(Path(join(base_dir, d, 'metadata.json')))
+    #     t_args = argparse.Namespace()
+    #     t_args.__dict__.update(json.load(f))
+    #     args = parser.parse_args(namespace=t_args)
+    #     args.traces_path = join(base_dir, d)
+    #
+    #     """get more/less trajectories"""
+    #     # args.similarity_limit = 3  # int(args.horizon * 0.66)
+    #     """importance measures"""
+    #     args.importance = "bety"
+    #     # # traj: last_state, max_min, max_avg, avg, avg_delta
+    #     # # state: sb, bety
+    #     args.verbose = True
+    #     args.fps = 7
+    #     args.randomized = True
+    #     main(args)

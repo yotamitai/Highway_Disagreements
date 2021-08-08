@@ -1,12 +1,15 @@
 from copy import deepcopy
 from os.path import join
 
-import numpy as np
+import cv2
 import matplotlib.pyplot as plt
-from scipy.special import softmax
-from get_trajectories import trajectory_importance_max_min
+import numpy as np
+from PIL import ImageFont, ImageDraw, Image
+from numpy import asarray
+from highway_disagreements.get_trajectories import trajectory_importance_max_min
+from highway_disagreements.get_agent import ACTION_DICT
 from highway_disagreements.logging_info import log
-from highway_disagreements.utils import save_image, create_video, make_clean_dirs, mark_agent
+from highway_disagreements.utils import save_image, create_video, make_clean_dirs
 import imageio
 
 
@@ -316,9 +319,9 @@ def get_top_k_disagreements(traces, args):
         top_k_diverse_trajectories += discarded_context
     top_k_diverse_trajectories = top_k_diverse_trajectories[:args.n_disagreements]
 
-    log(f'Chosen disagreements:')
+    log(args.logger, f'Chosen disagreements:', args.verbose)
     for d in top_k_diverse_trajectories:
-        log(f'Name: ({d.episode},{d.da_index})')
+        log(args.logger, f'Name: ({d.episode},{d.da_index})')
 
     return top_k_diverse_trajectories
 
@@ -344,3 +347,23 @@ def make_same_length(trajectories, horizon, traces):
         for _ in range(horizon - len(d.a2_states)):
             d.a2_states.append(d.a2_states[-1])
     return trajectories
+
+
+def mark_agent(img, action=None, text=None, position=None, color=255, thickness=2):
+    assert position, 'Error - No position provided for marking agent'
+    img2 = img.copy()
+    top_left = (position[0], position[1])
+    bottom_right = (position[0] + 30, position[1] + 15)
+    cv2.rectangle(img2, top_left, bottom_right, color, thickness)
+
+    """add action text"""
+    if (action is not None) or text:
+        font = ImageFont.truetype('Roboto-Regular.ttf', 20)
+        text = text or f'Chosen action: {ACTION_DICT[action]}'
+        image = Image.fromarray(img2, 'RGB')
+        draw = ImageDraw.Draw(image)
+        draw.text((40, 40), text, (255, 255, 255), font=font)
+        img_array = asarray(image)
+        return img_array
+
+    return img2

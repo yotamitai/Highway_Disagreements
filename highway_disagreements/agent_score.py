@@ -6,7 +6,7 @@ from highway_disagreements.logging_info import log
 def agent_assessment(a1_config, a2_config):
     agent_ratio, a1_overall, a2_overall = assess_agents(a1_config, a2_config)
     msg = f'A1 score: {a1_overall}, A2 score: {a2_overall}, agent_ration: {agent_ratio}'
-    log(msg, args.verbose)
+    log(args.logger, msg, args.verbose)
     return agent_ratio
 
 def assess_agents(a1, a2):
