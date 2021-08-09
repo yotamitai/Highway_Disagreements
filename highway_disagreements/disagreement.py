@@ -75,7 +75,7 @@ class DisagreementTrace(object):
             self.a1_trajectory_indexes.append(a1_traj_indexes)
             self.disagreement_trajectories.append(dt)
 
-    def get_frames(self, s1_indexes, s2_indexes, s2_traj, mark_position=None, actions=None):
+    def get_frames(self, s1_indexes, s2_indexes, s2_traj, mark_position=None, actions=[None,None]):
         a1_frames = [self.states[x].image for x in s1_indexes]
         a2_frames = [self.a2_trajectories[s2_traj][x - min(s2_indexes)].image for x in s2_indexes]
         assert len(a1_frames) == self.trajectory_length, 'Error in highlight frame length'

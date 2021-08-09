@@ -34,6 +34,10 @@ def get_highlights(args):
         env.args = args
         traces, states = get_traces(env, agent, args)
 
+    """Save data used for this run in output dir"""
+    pickle_save(traces, join(args.output_dir, 'Traces.pkl'))
+    pickle_save(states, join(args.output_dir, 'States.pkl'))
+
     """highlights algorithm"""
     data = {
         'state': list(states.keys()),
@@ -67,9 +71,7 @@ def get_highlights(args):
     # random order
     if args.randomized: random.shuffle(summary_trajectories)
 
-    """Save data used for this run"""
-    pickle_save(traces, join(args.output_dir, 'Traces.pkl'))
-    pickle_save(states, join(args.output_dir, 'States.pkl'))
+    """Save trajectories used for this run in output dir"""
     pickle_save(all_trajectories, join(args.output_dir, 'Trajectories.pkl'))
 
     """Save Highlight videos"""
@@ -127,29 +129,33 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """Highlight parameters"""
-    args.n_traces = 2
+    args.n_traces = 30
     args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
     args.num_trajectories = 5
-    args.trajectory_length = 30
+    args.trajectory_length = 20
     args.fade_duration = 2
     args.minimum_gap = 0
     args.overlay_limit = 5
     args.allowed_similar_states = 3
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
     args.randomized = True
-    args.fps = 10
+    args.fps = 4
     args.verbose = True
     args.load_trajectories = False
     args.results_dir = abspath('results')
 
     # RUN
-    agent = 'ClearLane'
-    args.load_dir = abspath('results/2021-08-04_12:27:19_SocialDistance')
+    # agent = 'FastRight'
+    # args.load_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/highlights/results/2021-08-09_10:29:58_FastRight'
     # args.load_path = f'results/ClearLane_09:48:40_04-08-2021'
-    # args.agent_path = f'../agents/Saved_Agents/{agent}/checkpoint-best.tar'
+    # args.agent_path = f'../agents/TheOne/{agent}/checkpoint-best.tar'
     # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{agent}.json')
     # args.env_id = "fastRight-v0"
     # args.seed = 0
-    args.name = agent
+    # args.name = agent
+
+    args.load_dir = False
+    args.name = 'NoLaneChange'
+    args.load_path = f'../agents/TheOne/{args.name}'
     get_highlights(args)

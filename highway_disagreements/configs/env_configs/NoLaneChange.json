@@ -20,5 +20,5 @@
   "offroad_terminal": false,
   "collision_reward": -10,
   "keep_distance_reward": 1,
-  "lane_change_reward": -2
+  "lane_change_reward": -3
 }

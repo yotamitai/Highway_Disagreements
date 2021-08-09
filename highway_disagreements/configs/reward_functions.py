@@ -56,7 +56,7 @@ class SocialDistance(HighwayEnv):
         # safety distance from car in same lane
         dist_closest_car_in_lane = [x[1] for x in other_cars if x[1] > 0 and abs(x[2]) <= 0.05]
         if not dist_closest_car_in_lane or dist_closest_car_in_lane[0] > 0.01:
-            keeping_distance = 0
+            keeping_distance = 1
         else:
             keeping_distance = -1
 
@@ -152,7 +152,7 @@ class FastRight(HighwayEnv):
         other_cars = obs[1:]
         dist_closest_car_in_lane = [x[1] for x in other_cars if x[1] > 0 and abs(x[2]) <= 0.05]
         if not dist_closest_car_in_lane or dist_closest_car_in_lane[0] > 0.01:
-            keeping_distance = 0
+            keeping_distance = 1
         else:
             keeping_distance = -1
 

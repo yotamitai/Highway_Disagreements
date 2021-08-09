@@ -55,12 +55,12 @@ if __name__ == '__main__':
     args.n_traces = 30
     args.num_trajectories = 5
     args.trajectory_length = 20
-    args.fps = 7
+    args.fps = 4
     args.trajectory_importance = "single_state"  # single_state
-    args.state_importance = "sb"
+    args.state_importance = "second"
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
 
-    for agent in ["SocialDistance", "NoLaneChange", "ParallelDriver", "ClearLane", "FastRight"]:
+    for agent in ["SocialDistance", "NoLaneChange", "ClearLane"]:
         args.name = agent
         args.load_path = f'../agents/TheOne/{agent}'
         get_highlights(args)

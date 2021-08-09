@@ -20,7 +20,6 @@ class Trajectory(object):
         self.trajectory_importance_max_min()
         self.trajectory_importance_avg()
         self.trajectory_importance_avg_delta()
-        self.trajectory_importance_last_state_diff() #TODO
 
     def trajectory_importance_max_min(self):
         """ computes the importance of the trajectory, according to max-min approach: delta(max state, min state) """

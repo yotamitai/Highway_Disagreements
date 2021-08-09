@@ -11,6 +11,8 @@ def compute_states_importance(states_q_values_df, compare_to='worst'):
     elif compare_to == 'second':
         states_q_values_df['importance'] = states_q_values_df['q_values'].apply(
             lambda x: np.max(x) - np.partition(x.flatten(), -2)[-2])
+    else:
+        raise Exception('No importance criteria provided.')
     return states_q_values_df
 
 

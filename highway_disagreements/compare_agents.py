@@ -112,9 +112,9 @@ def main(args):
     for d in disagreements:
         t = traces[d.episode]
         relative_idx = d.da_index - d.a1_states[0]
-        actions = argmax(d.a1_s_a_values[relative_idx]), argmax(d.a2_s_a_values[relative_idx])
+        # actions = argmax(d.a1_s_a_values[relative_idx]), argmax(d.a2_s_a_values[relative_idx])
         a1_frames, a2_frames = t.get_frames(d.a1_states, d.a2_states, d.trajectory_index,
-                                            mark_position=[164, 66], actions=actions)
+                                            mark_position=[164, 66])
         a1_disagreement_frames.append(a1_frames)
         a2_disagreement_frames.append(a2_frames)
 
@@ -135,80 +135,80 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='RL Agent Comparisons')
-    parser.add_argument('-env', '--env_id', help='environment name', default="fastRight-v0")
-    parser.add_argument('-a1', '--a1_name', help='agent name', type=str, default="Agent-1")
-    parser.add_argument('-a2', '--a2_name', help='agent name', type=str, default="Agent-2")
-    parser.add_argument('-n', '--num_episodes', help='number of episodes to run', type=int,
-                        default=3)
-    parser.add_argument('-fps', '--fps', help='summary video fps', type=int, default=1)
-    parser.add_argument('-l', '--horizon', help='number of frames to show per highlight',
-                        type=int, default=10)
-    parser.add_argument('-sb', '--show_score_bar', help='score bar', type=bool, default=False)
-    parser.add_argument('-rand', '--randomized', help='randomize order of summary trajectories',
-                        type=bool, default=True)
-    parser.add_argument('-k', '--n_disagreements', help='# of disagreements in the summary',
-                        type=int, default=5)
-    parser.add_argument('-overlaplim', '--similarity_limit', help='# overlaping',
-                        type=int, default=3)
-    parser.add_argument('-imp', '--importance',
-                        help='importance method', default='last_state')
-    parser.add_argument('-v', '--verbose', help='print information to the console', default=True)
-    parser.add_argument('-ass', '--agent_assessment', help='apply agent ratio by agent score',
-                        default=False)
-    parser.add_argument('-se', '--seed', help='environment seed', default=0)
-    parser.add_argument('-res', '--results_dir', help='results directory', default=abspath('results'))
-    parser.add_argument('-tr', '--traces_path', help='path to traces file if exists',
-                        default=None)
-    args = parser.parse_args()
-
-
-    """get more/less trajectories"""
-    # args.similarity_limit = 3  # int(args.horizon * 0.66)
-    """importance"""
-    args.importance = "last_state"
-    # traj: last_state, max_min, max_avg, avg, avg_delta
-    # state: sb, bety
-
-    """"""
-    args.verbose = False
-    args.horizon = 20
-    args.fps = 7
-    args.num_episodes = 1
-    # args.randomized = True
-
-    args.a1_name = 'FastRight'
-    args.a2_name = 'SocialDistance'
-    args.a1_path = f'../agents/TheOne/{args.a1_name}'
-    args.a2_path = f'../agents/TheOne/{args.a2_name}'
-
-    # args.traces_path = join(abspath('results'),"2021-08-04_21:32:15_FastRight-SocialDistance")
-
-    """RUN"""
-    main(args)
-
-
-
-    # base_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/DA_state_bety_6fps_20frames'
-    # directories = os.listdir(base_dir)
+    # parser = argparse.ArgumentParser(description='RL Agent Comparisons')
+    # parser.add_argument('-env', '--env_id', help='environment name', default="fastRight-v0")
+    # parser.add_argument('-a1', '--a1_name', help='agent name', type=str, default="Agent-1")
+    # parser.add_argument('-a2', '--a2_name', help='agent name', type=str, default="Agent-2")
+    # parser.add_argument('-n', '--num_episodes', help='number of episodes to run', type=int,
+    #                     default=3)
+    # parser.add_argument('-fps', '--fps', help='summary video fps', type=int, default=1)
+    # parser.add_argument('-l', '--horizon', help='number of frames to show per highlight',
+    #                     type=int, default=10)
+    # parser.add_argument('-sb', '--show_score_bar', help='score bar', type=bool, default=False)
+    # parser.add_argument('-rand', '--randomized', help='randomize order of summary trajectories',
+    #                     type=bool, default=True)
+    # parser.add_argument('-k', '--n_disagreements', help='# of disagreements in the summary',
+    #                     type=int, default=5)
+    # parser.add_argument('-overlaplim', '--similarity_limit', help='# overlaping',
+    #                     type=int, default=3)
+    # parser.add_argument('-imp', '--importance',
+    #                     help='importance method', default='last_state')
+    # parser.add_argument('-v', '--verbose', help='print information to the console', default=True)
+    # parser.add_argument('-ass', '--agent_assessment', help='apply agent ratio by agent score',
+    #                     default=False)
+    # parser.add_argument('-se', '--seed', help='environment seed', default=0)
+    # parser.add_argument('-res', '--results_dir', help='results directory', default=abspath('results'))
+    # parser.add_argument('-tr', '--traces_path', help='path to traces file if exists',
+    #                     default=None)
+    # args = parser.parse_args()
+    #
+    #
+    # """get more/less trajectories"""
+    # # args.similarity_limit = 3  # int(args.horizon * 0.66)
+    # """importance"""
+    # args.importance = "last_state"
+    # # traj: last_state, max_min, max_avg, avg, avg_delta
+    # # state: sb, bety
+    #
+    # """"""
+    # args.verbose = False
+    # args.horizon = 20
+    # args.fps = 7
+    # args.num_episodes = 1
+    # # args.randomized = True
+    #
+    # args.a1_name = 'FastRight'
+    # args.a2_name = 'SocialDistance'
+    # args.a1_path = f'../agents/TheOne/{args.a1_name}'
+    # args.a2_path = f'../agents/TheOne/{args.a2_name}'
+    #
+    # # args.traces_path = join(abspath('results'),"2021-08-04_21:32:15_FastRight-SocialDistance")
     #
     # """RUN"""
-    # parser = argparse.ArgumentParser(description='RL Agent Comparisons')
-    #
-    # for d in directories:
-    #     f = open(Path(join(base_dir, d, 'metadata.json')))
-    #     t_args = argparse.Namespace()
-    #     t_args.__dict__.update(json.load(f))
-    #     args = parser.parse_args(namespace=t_args)
-    #     args.traces_path = join(base_dir, d)
-    #
-    #     """get more/less trajectories"""
-    #     # args.similarity_limit = 3  # int(args.horizon * 0.66)
-    #     """importance measures"""
-    #     args.importance = "bety"
-    #     # # traj: last_state, max_min, max_avg, avg, avg_delta
-    #     # # state: sb, bety
-    #     args.verbose = True
-    #     args.fps = 7
-    #     args.randomized = True
-    #     main(args)
+    # main(args)
+
+
+
+    base_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/DA_state_bety_6fps_20frames'
+    directories = os.listdir(base_dir)
+
+    """RUN"""
+    parser = argparse.ArgumentParser(description='RL Agent Comparisons')
+
+    for d in directories:
+        f = open(Path(join(base_dir, d, 'metadata.json')))
+        t_args = argparse.Namespace()
+        t_args.__dict__.update(json.load(f))
+        args = parser.parse_args(namespace=t_args)
+        args.traces_path = join(base_dir, d)
+
+        """get more/less trajectories"""
+        # args.similarity_limit = 3  # int(args.horizon * 0.66)
+        """importance measures"""
+        args.importance = "bety"
+        # # traj: last_state, max_min, max_avg, avg, avg_delta
+        # # state: sb, bety
+        args.verbose = True
+        args.fps = 4
+        args.randomized = True
+        main(args)
