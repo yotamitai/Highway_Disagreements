@@ -1,0 +1,34 @@
+{
+  "__class__": "<class 'rl_agents.agents.deep_q_network.pytorch.DQNAgent'>",
+  "batch_size": 32,
+  "device": "cuda:best",
+  "double": true,
+  "exploration": {
+    "final_temperature": 0.05,
+    "method": "EpsilonGreedy",
+    "tau": 6000,
+    "temperature": 1.0
+  },
+  "gamma": 0.8,
+  "loss_function": "l2",
+  "memory_capacity": 15000,
+  "model": {
+    "activation": "RELU",
+    "in": 25,
+    "layers": [
+      256,
+      256
+    ],
+    "out": 5,
+    "reshape": "True",
+    "type": "MultiLayerPerceptron"
+  },
+  "n_steps": 1,
+  "optimizer": {
+    "k": 5,
+    "lr": 0.0005,
+    "type": "ADAM",
+    "weight_decay": 0
+  },
+  "target_update": 50
+}

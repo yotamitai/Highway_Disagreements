@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 from numpy import asarray
-from highway_disagreements.get_trajectories import trajectory_importance_max_min
+from highway_disagreements.get_trajectories import trajectory_importance_max_min, \
+    trajectory_importance_max_avg, trajectory_importance_avg, trajectory_importance_avg_delta
 from highway_disagreements.get_agent import ACTION_DICT
 from highway_disagreements.logging_info import log
 from highway_disagreements.utils import save_image, create_video, make_clean_dirs
@@ -130,9 +131,9 @@ class DisagreementTrajectory(object):
         self.a2_values_for_a1_states = a2_values_for_a1_states
         self.importance_funcs = {
             "max_min": trajectory_importance_max_min,
-            "max_avg": trajectory_importance_max_min,
-            "avg": trajectory_importance_max_min,
-            "avg_delta": trajectory_importance_max_min,
+            "max_avg": trajectory_importance_max_avg,
+            "avg": trajectory_importance_avg,
+            "avg_delta": trajectory_importance_avg_delta,
         }
 
     def calculate_state_disagreement_extent(self, importance):

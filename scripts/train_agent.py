@@ -72,9 +72,9 @@ if __name__ == '__main__':
     # args.agent_config = abspath(f'highway_disagreements/configs/agent_conefigs/{agent_config}.json')
     # args.env_config = abspath(f'highway_disagreements/configs/env_configs/{env_config}.json')
 
-    # args.load_path = 'agents/TheOne/FastRight'
+    # args.load_path = '../agents/Yael'
     # args.eval = True
-    #
+    # #
     # args.num_episodes = 4
 
     main(args)

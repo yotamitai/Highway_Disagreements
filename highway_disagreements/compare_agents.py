@@ -189,8 +189,9 @@ if __name__ == '__main__':
 
 
 
-    base_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/DA_state_bety_6fps_20frames'
+    base_dir = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/DA_trajLastState_bety_7fps_20frames'
     directories = os.listdir(base_dir)
+    directories = [x for x in directories if 'Parallel' not in x]
 
     """RUN"""
     parser = argparse.ArgumentParser(description='RL Agent Comparisons')
@@ -205,10 +206,11 @@ if __name__ == '__main__':
         """get more/less trajectories"""
         # args.similarity_limit = 3  # int(args.horizon * 0.66)
         """importance measures"""
-        args.importance = "bety"
+        args.importance = "max_min"
         # # traj: last_state, max_min, max_avg, avg, avg_delta
         # # state: sb, bety
         args.verbose = True
         args.fps = 4
         args.randomized = True
+        args.n_disagreements = 5
         main(args)
