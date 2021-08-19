@@ -16,6 +16,7 @@ import imageio
 
 class DisagreementTrace(object):
     def __init__(self, episode, trajectory_length, agent_ratio=1):
+        self.positions = []
         self.obs = []
         self.actions = []
         self.rewards = []
@@ -42,8 +43,9 @@ class DisagreementTrace(object):
         self.a1_values_for_a2_states = []
 
     def update(self, state_object, obs, a, a1_s_a_values, a2_values_for_a1_states, r, done,
-               infos):
+               infos, position):
         self.obs.append(obs)
+        self.positions.append(position)
         self.rewards.append(r)
         self.dones.append(done)
         self.infos.append(infos)
@@ -76,30 +78,22 @@ class DisagreementTrace(object):
             self.a1_trajectory_indexes.append(a1_traj_indexes)
             self.disagreement_trajectories.append(dt)
 
-    def get_frames(self, s1_indexes, s2_indexes, s2_traj, mark_position=None, actions=[None,None]):
+    def get_frames(self, s1_indexes, s2_indexes, s2_traj):
         a1_frames = [self.states[x].image for x in s1_indexes]
         a2_frames = [self.a2_trajectories[s2_traj][x - min(s2_indexes)].image for x in s2_indexes]
         assert len(a1_frames) == self.trajectory_length, 'Error in highlight frame length'
         assert len(a2_frames) == self.trajectory_length, 'Error in highlight frame length'
-        da_index = self.trajectory_length // 2 - 1
-        if mark_position:
-            """mark disagreement state"""
-            a1_frames[da_index] = mark_agent(a1_frames[da_index], text='Disagreement',
-                                             position=mark_position)
-            a2_frames[da_index] = a1_frames[da_index]
-            """mark chosen action"""
-            a1_frames[da_index + 1] = mark_agent(a1_frames[da_index + 1], action=actions[0],
-                                                 position=mark_position)
-            a2_frames[da_index + 1] = mark_agent(a2_frames[da_index + 1], action=actions[1],
-                                                 position=mark_position, color=0)
+        # plt.imshow(self.a2_trajectories[s2_traj][0].image)
+        # plt.show()
         return a1_frames, a2_frames
 
 
 class State(object):
-    def __init__(self, idx, episode, obs, state, action_values, img, **kwargs):
+    def __init__(self, idx, episode, obs, state, action_values, img, position, **kwargs):
         self.observation = obs
         self.image = img
         self.state = state
+        self.position = position
         self.action_values = action_values
         self.id = (episode, idx)
         self.kwargs = kwargs
@@ -229,33 +223,33 @@ def disagreement(timestep, trace, env2, a2, curr_s, a1):
 
 
 def save_disagreements(a1_DAs, a2_DAs, output_dir, fps):
-    highlight_frames_dir = join(output_dir, "highlight_frames")
+    disagreement_frames_dir = join(output_dir, "disagreement_frames")
     video_dir = join(output_dir, "videos")
     make_clean_dirs(video_dir)
     make_clean_dirs(join(video_dir, 'temp'))
-    make_clean_dirs(highlight_frames_dir)
+    make_clean_dirs(disagreement_frames_dir)
     dir = join(video_dir, 'temp')
 
     height, width, layers = a1_DAs[0][0].shape
     size = (width, height)
     trajectory_length = len(a1_DAs[0])
     da_idx = trajectory_length // 2
-    for hl_i in range(len(a1_DAs)):
-        for img_i in range(len(a1_DAs[hl_i])):
-            save_image(highlight_frames_dir, "a1_DA{}_Frame{}".format(str(hl_i), str(img_i)),
-                       a1_DAs[hl_i][img_i])
-            save_image(highlight_frames_dir, "a2_DA{}_Frame{}".format(str(hl_i), str(img_i)),
-                       a2_DAs[hl_i][img_i])
+    for da_i in range(len(a1_DAs)):
+        for img_i in range(len(a1_DAs[da_i])):
+            save_image(disagreement_frames_dir, "a1_DA{}_Frame{}".format(str(da_i), str(img_i)),
+                       a1_DAs[da_i][img_i])
+            save_image(disagreement_frames_dir, "a2_DA{}_Frame{}".format(str(da_i), str(img_i)),
+                       a2_DAs[da_i][img_i])
 
         """up to disagreement"""
-        create_video('together' + str(hl_i), highlight_frames_dir, dir, "a1_DA" + str(hl_i), size,
+        create_video('together' + str(da_i), disagreement_frames_dir, dir, "a1_DA" + str(da_i), size,
                      da_idx, fps, add_pause=[0, 4])
         """from disagreement"""
-        name1, name2 = "a1_DA" + str(hl_i), "a2_DA" + str(hl_i)
-        create_video(name1, highlight_frames_dir, dir, name1, size,
-                     trajectory_length, fps, start=da_idx, add_pause=[7, 0])
-        create_video(name2, highlight_frames_dir, dir, name2, size,
-                     trajectory_length, fps, start=da_idx, add_pause=[7, 0])
+        name1, name2 = "a1_DA" + str(da_i), "a2_DA" + str(da_i)
+        create_video(name1, disagreement_frames_dir, dir, name1, size,
+                     trajectory_length, fps, start=da_idx)
+        # create_video(name2, disagreement_frames_dir, dir, name2, size,
+        #              trajectory_length, fps, start=da_idx)
     return video_dir
 
 
@@ -286,7 +280,8 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
         new_s = new_obs
         new_s_a_values = agent.get_state_action_values(new_s)
         new_frame = env.render(mode='rgb_array')
-        new_state = State(step, trace.episode, new_obs, new_s, new_s_a_values, new_frame)
+        position = deepcopy(env.road.vehicles[0])
+        new_state = State(step, trace.episode, new_obs, new_s, new_s_a_values, new_frame, position)
         trajectory_states.append(new_state)
         da_rewards.append(r)
         curr_s = new_s
@@ -348,23 +343,3 @@ def make_same_length(trajectories, horizon, traces):
         for _ in range(horizon - len(d.a2_states)):
             d.a2_states.append(d.a2_states[-1])
     return trajectories
-
-
-def mark_agent(img, action=None, text=None, position=None, color=255, thickness=2):
-    assert position, 'Error - No position provided for marking agent'
-    img2 = img.copy()
-    top_left = (position[0], position[1])
-    bottom_right = (position[0] + 30, position[1] + 15)
-    cv2.rectangle(img2, top_left, bottom_right, color, thickness)
-
-    """add action text"""
-    if (action is not None) or text:
-        font = ImageFont.truetype('Roboto-Regular.ttf', 20)
-        text = text or f'Chosen action: {ACTION_DICT[action]}'
-        image = Image.fromarray(img2, 'RGB')
-        draw = ImageDraw.Draw(image)
-        draw.text((40, 40), text, (255, 255, 255), font=font)
-        img_array = asarray(image)
-        return img_array
-
-    return img2

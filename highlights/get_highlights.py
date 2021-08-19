@@ -129,7 +129,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """Highlight parameters"""
-    args.n_traces = 30
+    args.n_traces = 10
     args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
     args.num_trajectories = 5
@@ -156,6 +156,6 @@ if __name__ == '__main__':
     # args.name = agent
 
     args.load_dir = False
-    args.name = 'Yael'
-    args.load_path = f'../agents/{args.name}'
+    args.name = 'FastRight'
+    args.load_path = f'../agents/TheBest/{args.name}'
     get_highlights(args)

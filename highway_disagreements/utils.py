@@ -5,6 +5,7 @@ import shutil
 import pickle
 from os.path import join
 import cv2
+from matplotlib import pyplot as plt
 from skimage import img_as_ubyte
 import imageio
 
@@ -32,12 +33,15 @@ def json_save(obj, path):
         json.dump(obj, f, sort_keys=True, indent=4)
 
 
-def create_video(name, frame_dir, video_dir, agent_hl, size, length, fps, start=0,
+def create_video(name, frame_dir, video_dir, agent_da, size, length, fps, start=0,
                  add_pause=None):
     img_array = []
     for i in range(start, length):
-        img = cv2.imread(os.path.join(frame_dir, agent_hl + f'_Frame{i}.png'))
+        img = cv2.imread(os.path.join(frame_dir, agent_da + f'_Frame{i}.png'))
         img_array.append(img)
+
+    # plt.imshow(img_array[0])
+    # plt.show()
 
     if add_pause:
         img_array = [img_array[0] for _ in range(add_pause[0])] + img_array

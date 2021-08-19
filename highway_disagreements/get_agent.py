@@ -18,7 +18,7 @@ class MyEvaluation(Evaluation):
                                            display_env=display_env)
 
 
-def get_agent(load_path, seed=0):
+def get_agent(load_path, seed=0, evaluation_reset=False):
     """Implement here for specific agent and environment loading scheme"""
     config_filename = [x for x in listdir(load_path) if "metadata" in x][0]
     f = open(join(load_path, config_filename))
@@ -31,6 +31,9 @@ def get_agent(load_path, seed=0):
     env.configure(env_config)
     env.define_spaces()
     agent.exploration_policy = exploration_factory({'method': 'Greedy'}, env.action_space)
+    if evaluation_reset:
+        evaluation_reset.training = False
+        evaluation_reset.close()
     evaluation = MyEvaluation(env, agent, display_env=False)
     agent_path = Path(join(load_path, 'checkpoint-final.tar'))
     evaluation.load_agent_model(agent_path)

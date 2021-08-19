@@ -1,4 +1,5 @@
 import argparse
+from copy import deepcopy
 from os.path import abspath
 
 from highlights.get_highlights import get_highlights
@@ -60,8 +61,9 @@ if __name__ == '__main__':
     args.state_importance = "second"
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
 
-    for agent in ["SocialDistance", "NoLaneChange", "ClearLane"]:
-        args.name = agent
-        args.load_path = f'../agents/TheOne/{agent}'
-        get_highlights(args)
+    for agent in ["SocialDistance", "NoLaneChange", "ClearLane", "FastRight"]:
+        base_args = deepcopy(args)
+        base_args.name = agent
+        base_args.load_path = f'../agents/TheBest/{agent}'
+        get_highlights(base_args)
 

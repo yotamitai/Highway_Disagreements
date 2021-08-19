@@ -11,7 +11,7 @@
   "offscreen_rendering": true,
   "simulation_frequency": 15,
   "policy_frequency": 1,
-  "lanes_count": 4,
+  "lanes_count": 3,
   "vehicles_count": 20,
   "controlled_vehicles": 1,
   "initial_lane_id": null,
