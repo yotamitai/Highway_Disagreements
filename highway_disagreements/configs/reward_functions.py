@@ -121,7 +121,7 @@ class ClearLane(HighwayEnv):
             keeping_distance = -1
 
         reward = \
-            + self.config["distance_reward"] * np.clip(closest_car, 0, 1) \
+            + self.config["distance_reward"] * (1 - np.clip(closest_car, 0, 1)) \
             + self.config["keep_distance_reward"] * keeping_distance \
             + self.config["collision_reward"] * self.vehicle.crashed
         reward = -1 if not self.vehicle.on_road else reward

@@ -55,13 +55,13 @@ if __name__ == '__main__':
     # }
     args.n_traces = 30
     args.num_trajectories = 5
-    args.trajectory_length = 20
+    args.trajectory_length = 30
     args.fps = 4
     args.trajectory_importance = "single_state"  # single_state
     args.state_importance = "second"
     args.highlights_selection_method = 'importance_scores'  # 'scores_and_similarity', 'similarity'
 
-    for agent in ["SocialDistance", "NoLaneChange", "ClearLane", "FastRight"]:
+    for agent in ["SocialDistance", "ClearLane", "FastRight"]:
         base_args = deepcopy(args)
         base_args.name = agent
         base_args.load_path = f'../agents/TheBest/{agent}'

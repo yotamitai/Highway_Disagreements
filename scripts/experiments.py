@@ -40,15 +40,15 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance measures"""
-    args.importance = "bety"
+    args.importance = "last_state"
     # # traj: last_state, max_min, max_avg, avg, avg_delta
     # # state: sb, bety
 
     """"""
     args.verbose = False
-    args.horizon = 20
+    args.horizon = 30
     args.fps = 4
-    args.num_episodes = 5
+    args.num_episodes = 7
     args.randomized = True
     args.results_dir = abspath('../highway_disagreements/results')
 
@@ -59,12 +59,15 @@ if __name__ == '__main__':
     #     "FastRight": 'run_20210729-160524_37188',
     #     "RightLane": 'run_20210729-160525_37181'
     # }
-    agents = ["SocialDistance", "FastRight", "ClearLane", "NoLaneChange"]
+    agents = ["SocialDistance", "FastRight", "ClearLane"]
     """RUN"""
-    for a1, a2 in permutations(agents, 2):
-        base_args = deepcopy(args)
-        base_args.a1_name = a1
-        base_args.a2_name = a2
-        base_args.a1_path = abspath(f'../agents/TheBest/{a1}')
-        base_args.a2_path = abspath(f'../agents/TheBest/{a2}')
-        main(base_args)
+    for importance in ["bety"]:
+        args.importance = importance
+        for a1, a2 in permutations(agents, 2):
+            print(f'running {a1} vs {a2}')
+            base_args = deepcopy(args)
+            base_args.a1_name = a1
+            base_args.a2_name = a2
+            base_args.a1_path = abspath(f'../agents/TheBest/{a1}')
+            base_args.a2_path = abspath(f'../agents/TheBest/{a2}')
+            main(base_args)

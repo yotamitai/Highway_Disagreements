@@ -248,8 +248,8 @@ def save_disagreements(a1_DAs, a2_DAs, output_dir, fps):
         name1, name2 = "a1_DA" + str(da_i), "a2_DA" + str(da_i)
         create_video(name1, disagreement_frames_dir, dir, name1, size,
                      trajectory_length, fps, start=da_idx)
-        # create_video(name2, disagreement_frames_dir, dir, name2, size,
-        #              trajectory_length, fps, start=da_idx)
+        create_video(name2, disagreement_frames_dir, dir, name2, size,
+                     trajectory_length, fps, start=da_idx)
     return video_dir
 
 
@@ -280,7 +280,7 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
         new_s = new_obs
         new_s_a_values = agent.get_state_action_values(new_s)
         new_frame = env.render(mode='rgb_array')
-        position = deepcopy(env.road.vehicles[0])
+        position = deepcopy(env.road.vehicles[0].destination)
         new_state = State(step, trace.episode, new_obs, new_s, new_s_a_values, new_frame, position)
         trajectory_states.append(new_state)
         da_rewards.append(r)
@@ -298,6 +298,9 @@ def get_top_k_disagreements(traces, args):
     for trace in traces:
         all_trajectories += [t for t in trace.disagreement_trajectories]
     sorted_trajectories = sorted(all_trajectories, key=lambda x: x.importance, reverse=True)
+
+    sorted_trajectories = [x for x in sorted_trajectories if x.a1_states[-1] - x.da_index > 5]
+
     """select trajectories"""
     seen_indexes = {i: [] for i in range(len(traces))}
     for d in sorted_trajectories:

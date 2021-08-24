@@ -129,11 +129,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     """Highlight parameters"""
-    args.n_traces = 10
+    args.n_traces = 3
     args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
-    args.num_trajectories = 5
-    args.trajectory_length = 20
+    args.num_trajectories = 3
+    args.trajectory_length = 30
     args.fade_duration = 2
     args.minimum_gap = 0
     args.overlay_limit = 5
@@ -156,6 +156,6 @@ if __name__ == '__main__':
     # args.name = agent
 
     args.load_dir = False
-    args.name = 'FastRight'
+    args.name = 'ParallelDriver'
     args.load_path = f'../agents/TheBest/{args.name}'
     get_highlights(args)

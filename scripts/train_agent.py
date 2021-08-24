@@ -67,7 +67,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    env_config = "FastRight"
+    env_config = "FastRight_1"
     agent_config = "ddqn"
     args.agent_config = abspath(f'../highway_disagreements/configs/agent_configs/{agent_config}.json')
     args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{env_config}.json')

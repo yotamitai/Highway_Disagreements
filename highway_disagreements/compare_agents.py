@@ -28,6 +28,7 @@ def online_comparison(args):
     env1, a1, evaluation1 = get_agent(args.a1_path)
     env2, a2, evaluation2 = get_agent(args.a2_path)
     args.logger.parent = None
+    env2 = deepcopy(env1)
     env1.args = env2.args = args
 
     """agent assessment"""
@@ -49,30 +50,35 @@ def online_comparison(args):
         a1_s_a_values = a1.get_state_action_values(curr_obs)
         a2_s_a_values = a2.get_state_action_values(curr_obs)
         frame = env1.render(mode='rgb_array')
-        position = deepcopy(env1.road.vehicles[0])
+        position = deepcopy(env1.road.vehicles[0].destination)
         state = State(t, e, curr_obs, curr_s, a1_s_a_values, frame, position)
         a1_a, a2_a = a1.act(curr_s), a2.act(curr_s)
         trace.update(state, curr_obs, a1_a, a1_s_a_values, a2_s_a_values, 0, False, {}, position)
-        # while not done:
-        for _ in range(50):
+        while not done:
+        # for _ in range(50):
+        #     if done: break
             """check for disagreement"""
             if a1_a != a2_a:
                 log(args.logger, f'\tDisagreement at step {t}:\t\t A1: {a1_a} Vs. A2: {a2_a}',
                     args.verbose)
+                copy_env2 = deepcopy(env2)
                 disagreement(t, trace, env2, a2, curr_s, a1)
                 """return agent 2 to the disagreement state"""
-                env2, a2, evaluation2 = get_agent(args.a2_path, evaluation_reset=evaluation2)
-                env2.args = args
-                init_state = [env2.reset() for _ in range(e + 1)][-1]
-                a2.previous_state = init_state
-                [env2.step(a) for a in trace.actions[:-1]]
-                # a2.previous_state = curr_s
-                assert a2.previous_state.tolist() == a2.previous_state.tolist(), \
-                    f'Nonidentical agent transition'
+                env2 = copy_env2
+                a2.previous_state = a1.previous_state
+                # disagreement(t, trace, env2, a2, curr_s, a1)
+                # """return agent 2 to the disagreement state"""
+                # env2, a2, evaluation2 = get_agent(args.a2_path, evaluation_reset=evaluation2)
+                # env2.args = args
+                # init_state = [env2.reset() for _ in range(e + 1)][-1]
+                # a2.previous_state = init_state
+                # [env2.step(a) for a in trace.actions[:-1]]
+                # assert a1.previous_state.tolist() == a2.previous_state.tolist(), \
+                #     f'Nonidentical agent transition'
             """Transition both agent's based on agent 1 action"""
             t += 1
             curr_obs, r, done, info = env1.step(a1_a)
-            position = deepcopy(env1.road.vehicles[0])
+            position = deepcopy(env1.road.vehicles[0].destination)
             _ = env2.step(a1_a)  # dont need returned values
             assert curr_obs.tolist() == _[0].tolist(), f'Nonidentical environment transition'
             curr_s = curr_obs
@@ -100,15 +106,18 @@ def main(args):
     traces = load_traces(args.traces_path) if args.traces_path else online_comparison(args)
     log(args.logger, f'Obtained traces', args.verbose)
 
-    """get trajectories"""
-    [trace.get_trajectories() for trace in traces]
-
     """save traces"""
     save_traces(traces, args.output)
     log(args.logger, f'Saved traces', args.verbose)
 
+    """get trajectories"""
+    [trace.get_trajectories() for trace in traces]
+    log(args.logger, f'Obtained trajectories', args.verbose)
+
     """rank disagreement trajectories by importance measures"""
     rank_trajectories(traces, args.importance)
+    log(args.logger, f'Trajectories ranked', args.verbose)
+
 
     """top k diverse disagreements"""
     disagreements = get_top_k_disagreements(traces, args)
@@ -125,7 +134,7 @@ def main(args):
 
     """mark disagreement frames"""
     a1_disagreement_frames, a2_disagreement_frames = \
-        get_and_mark_frames(disagreements, traces, agent_position=[164, 66])
+        get_and_mark_frames(disagreements, traces, agent_position=[164, 66], color=args.color)
 
     """save disagreement frames"""
     video_dir = save_disagreements(a1_disagreement_frames, a2_disagreement_frames,
@@ -183,16 +192,18 @@ if __name__ == '__main__':
     args.verbose = False
     args.horizon = 30
     args.fps = 4
-    args.num_episodes = 2
-    # args.randomized = False
+    args.num_episodes = 1
+    args.randomized = True
+    # args.n_disagreements = 2
 
-    args.a1_name = 'FastRight'
-    args.a2_name = 'SocialDistance'
+    args.color = 0
+    args.a1_name = 'SocialDistance'
+    args.a2_name = 'ClearLane'
     args.a1_path = f'../agents/TheBest/{args.a1_name}'
     args.a2_path = f'../agents/TheBest/{args.a2_name}'
 
-    # args.traces_path = join(abspath('results'),"2021-08-19_12:07:03_FastRight-SocialDistance")
-    # args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/TheBest/LastState/2021-08-10_15:28:16_SocialDistance-FastRight'
+    # args.traces_path = join(abspath('results'),"2021-08-22_12:18:57_ParallelDriver-NoLaneChange")
+    args.traces_path = '../User Study Videos/DA/TheBest/Current/2021-08-21_10:01:17_SocialDistance-ClearLane'
 
     """RUN"""
     main(args)
@@ -203,13 +214,14 @@ if __name__ == '__main__':
     #
     # """RUN"""
     # parser = argparse.ArgumentParser(description='RL Agent Comparisons')
-
+    #
     # for d in directories:
     #     f = open(Path(join(base_dir, d, 'metadata.json')))
     #     t_args = argparse.Namespace()
     #     t_args.__dict__.update(json.load(f))
     #     args = parser.parse_args(namespace=t_args)
     #     args.traces_path = join(base_dir, d)
+    #     args.color = 255
     #
     #     """get more/less trajectories"""
     #     # args.similarity_limit = 3  # int(args.horizon * 0.66)
