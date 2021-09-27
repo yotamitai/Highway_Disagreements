@@ -147,7 +147,8 @@ class DisagreementTrajectory(object):
         rel_idx = e_i - s_i
         if importance == "last_state":
             s1, s2 = trace.states[e_i], trace.a2_trajectories[i][rel_idx]
-            return self.trajectory_importance_last_state(s1, s2, rel_idx)
+            # return self.trajectory_importance_last_state(s1, s2, rel_idx)
+            return self.trajectory_importance_last_state_2(s1, s2, rel_idx)
         else:
             return self.get_trajectory_importance(importance, rel_idx)
 
@@ -180,6 +181,18 @@ class DisagreementTrajectory(object):
         s1_score = max(s1_a1_vals) * self.agent_ratio + max(s1_a2_vals)
         s2_score = max(s2_a1_vals) * self.agent_ratio + max(s2_a2_vals)
         return abs(s1_score - s2_score)
+
+    def trajectory_importance_last_state_2(self, s1, s2, idx):
+        if s1.image.tolist() == s2.image.tolist(): return 0
+        """state values"""
+        s1_a1_vals = self.a1_s_a_values[-1]
+        s1_a2_vals = self.a2_values_for_a1_states[-1]
+        s2_a1_vals = self.a1_values_for_a2_states[idx]
+        s2_a2_vals = self.a2_s_a_values[idx]
+        """the value of the state is defined by the best available action from it"""
+        s1_score = abs(max(s1_a1_vals) * self.agent_ratio - max(s1_a2_vals))
+        s2_score = abs(max(s2_a1_vals) * self.agent_ratio - max(s2_a2_vals))
+        return abs(s1_score + s2_score)
 
     def second_best_confidence(self, a1_vals, a2_vals):
         """compare best action to second-best action"""

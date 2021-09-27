@@ -72,9 +72,9 @@ if __name__ == '__main__':
     # args.agent_config = abspath(f'../highway_disagreements/configs/agent_configs/{agent_config}.json')
     # args.env_config = abspath(f'../highway_disagreements/configs/env_configs/{env_config}.json')
 
-    # args.load_path = '../agents/TheBest/ParallelDriver'
-    # args.eval = True
+    args.load_path = '../agents/TheBest/ParallelDriver'
+    args.eval = True
     #
-    # args.num_episodes = 10
+    args.num_episodes = 3
 
     main(args)

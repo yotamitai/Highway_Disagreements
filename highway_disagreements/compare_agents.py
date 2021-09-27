@@ -197,13 +197,13 @@ if __name__ == '__main__':
     # args.n_disagreements = 2
 
     args.color = 0
-    args.a1_name = 'SocialDistance'
-    args.a2_name = 'ClearLane'
+    args.a1_name = 'FastRight'
+    args.a2_name = 'SocialDistance'
     args.a1_path = f'../agents/TheBest/{args.a1_name}'
     args.a2_path = f'../agents/TheBest/{args.a2_name}'
 
     # args.traces_path = join(abspath('results'),"2021-08-22_12:18:57_ParallelDriver-NoLaneChange")
-    args.traces_path = '../User Study Videos/DA/TheBest/Current/2021-08-21_10:01:17_SocialDistance-ClearLane'
+    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/TheBest/Current_new/2021-08-22_11:58:29_SocialDistance-FastRight'
 
     """RUN"""
     main(args)
