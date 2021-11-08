@@ -184,7 +184,7 @@ if __name__ == '__main__':
     """get more/less trajectories"""
     # args.similarity_limit = 3  # int(args.horizon * 0.66)
     """importance"""
-    args.importance = "last_state"
+    args.importance = "bety"
     # traj: last_state, max_min, max_avg, avg, avg_delta
     # state: sb, bety
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     args.a2_path = f'../agents/TheBest/{args.a2_name}'
 
     # args.traces_path = join(abspath('results'),"2021-08-22_12:18:57_ParallelDriver-NoLaneChange")
-    args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/TheBest/Current_new/2021-08-22_11:58:29_SocialDistance-FastRight'
+    # args.traces_path = '/home/yotama/OneDrive/Local_Git/Highway_Disagreements/User Study Videos/DA/TheBest/Current_new/2021-08-22_11:51:17_ClearLane-SocialDistance'
 
     """RUN"""
     main(args)

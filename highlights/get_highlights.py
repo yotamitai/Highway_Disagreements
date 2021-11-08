@@ -39,10 +39,17 @@ def get_highlights(args):
     pickle_save(states, join(args.output_dir, 'States.pkl'))
 
     """highlights algorithm"""
-    data = {
-        'state': list(states.keys()),
-        'q_values': [x.observed_actions for x in states.values()]
-    }
+    a, b, c = states[(0, 0)].image.shape
+    data = {'state': list(states.keys()),
+            'q_values': [x.observed_actions for x in states.values()],
+            'features': [x.image.reshape(a * b * c) for x in states.values()]}
+
+
+    if args.highlights_div:
+        i = len(traces[0].states) // 2
+        threshold = args.div_coefficient * (
+        sum(states[(0, i)].image.reshape(a * b * c) - states[(0, i + 1)].image.reshape(
+            a * b * c)))
     q_values_df = pd.DataFrame(data)
 
     """importance by state"""
@@ -52,11 +59,14 @@ def get_highlights(args):
     """get highlights"""
     if args.trajectory_importance == "single_state":
         """highlights importance by single state importance"""
-        summary_states = highlights(highlights_df, traces, args.num_trajectories,
-                                    args.trajectory_length, args.minimum_gap, args.overlay_limit)
-        # summary_states = highlights_div(highlights_df, traces, args.num_trajectories,
-        #                             args.trajectory_length,
-        #                             args.minimum_gap)
+        trace_lengths = {k: len(v.states) for k, v in enumerate(traces)}
+        if args.highlights_div:
+            summary_states = highlights_div(highlights_df, trace_lengths, args.num_trajectories,
+                                            args.trajectory_length, args.minimum_gap,
+                                            threshold=threshold)
+        else:
+            summary_states = highlights(highlights_df, trace_lengths, args.num_trajectories,
+                                        args.trajectory_length, args.minimum_gap)
         all_trajectories = states_to_trajectories(summary_states, state_importance_dict)
         summary_trajectories = all_trajectories
 
@@ -126,13 +136,15 @@ if __name__ == '__main__':
                         help='load previously generated traces', type=bool, default=False)
     parser.add_argument('-loadTraj', '--load_last_trajectories',
                         help='load previously generated trajectories', type=bool, default=False)
+    parser.add_argument('--highlights_div', type=bool, default=False)
+    parser.add_argument('--div_coefficient', type=int, default=2)
     args = parser.parse_args()
 
     """Highlight parameters"""
     args.n_traces = 3
     args.trajectory_importance = "single_state" # single_state
     args.state_importance = "second"
-    args.num_trajectories = 3
+    args.num_trajectories = 5
     args.trajectory_length = 30
     args.fade_duration = 2
     args.minimum_gap = 0
@@ -144,6 +156,8 @@ if __name__ == '__main__':
     args.verbose = True
     args.load_trajectories = False
     args.results_dir = abspath('results')
+    # args.highlights_div = True
+    # args.div_coefficient = 2
 
     # RUN
     # agent = 'FastRight'

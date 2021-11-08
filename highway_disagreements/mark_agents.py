@@ -46,8 +46,8 @@ def mark_trajectory_step(img, rel_pos, ref_pos, temp_img, color=255, thickness=-
     top_left = (ref_pos[0] + add_y, ref_pos[1] + add_x)
     bottom_right = (ref_pos[0] + 30 + add_y, ref_pos[1] + 15 + add_x)
     cv2.rectangle(img2, top_left, bottom_right, color, thickness)
-    # cv2.rectangle(img2,(ref_pos[0] + add_y +4, ref_pos[1] + add_x+4),
-    #               (ref_pos[0] + 30 + add_y -4, ref_pos[1] + 15 + add_x-4 ), (43,165,0,255), thickness)
+    cv2.rectangle(img2,(ref_pos[0] + add_y +4, ref_pos[1] + add_x+4),
+                  (ref_pos[0] + 30 + add_y -4, ref_pos[1] + 15 + add_x-4 ), (43,165,0,255), thickness)
     """for testing"""
     # plt.imshow(img2)
     # plt.show()

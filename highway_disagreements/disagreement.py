@@ -12,6 +12,9 @@ from highway_disagreements.get_agent import ACTION_DICT
 from highway_disagreements.logging_info import log
 from highway_disagreements.utils import save_image, create_video, make_clean_dirs
 import imageio
+import pandas as pd
+from bisect import bisect
+from bisect import insort_left
 
 
 class DisagreementTrace(object):
@@ -255,7 +258,8 @@ def save_disagreements(a1_DAs, a2_DAs, output_dir, fps):
                        a2_DAs[da_i][img_i])
 
         """up to disagreement"""
-        create_video('together' + str(da_i), disagreement_frames_dir, dir, "a1_DA" + str(da_i), size,
+        create_video('together' + str(da_i), disagreement_frames_dir, dir, "a1_DA" + str(da_i),
+                     size,
                      da_idx, fps, add_pause=[0, 4])
         """from disagreement"""
         name1, name2 = "a1_DA" + str(da_i), "a2_DA" + str(da_i)
@@ -294,7 +298,8 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
         new_s_a_values = agent.get_state_action_values(new_s)
         new_frame = env.render(mode='rgb_array')
         position = deepcopy(env.road.vehicles[0].destination)
-        new_state = State(step, trace.episode, new_obs, new_s, new_s_a_values, new_frame, position)
+        new_state = State(step, trace.episode, new_obs, new_s, new_s_a_values, new_frame,
+                          position)
         trajectory_states.append(new_state)
         da_rewards.append(r)
         curr_s = new_s
@@ -304,37 +309,44 @@ def disagreement_states(trace, env, agent, timestep, curr_s):
 
 
 def get_top_k_disagreements(traces, args):
-    """obtain the N-most important trajectories"""
-    top_k_diverse_trajectories, discarded_context = [], []
+    budget, context_length, minimum_gap = args.n_disagreements, args.horizon // 2, 0
     """get all trajectories"""
     all_trajectories = []
     for trace in traces:
         all_trajectories += [t for t in trace.disagreement_trajectories]
-    sorted_trajectories = sorted(all_trajectories, key=lambda x: x.importance, reverse=True)
 
-    sorted_trajectories = [x for x in sorted_trajectories if x.a1_states[-1] - x.da_index > 5]
+    data = {'state': [(x.episode, x.da_index) for x in all_trajectories],
+            'trajectory': all_trajectories,
+            'importance': [x.importance for x in all_trajectories]}
+    all_trajectories_df = pd.DataFrame(data)
 
-    """select trajectories"""
-    seen_indexes = {i: [] for i in range(len(traces))}
-    for d in sorted_trajectories:
-        t_indexes = d.a1_states
-        intersecting_indexes = set(seen_indexes[d.episode]).intersection(set(t_indexes))
-        if len(intersecting_indexes) > args.similarity_limit:
-            discarded_context.append(d)
-            continue
-        seen_indexes[d.episode] += t_indexes
-        top_k_diverse_trajectories.append(d)
-        if len(top_k_diverse_trajectories) == args.n_disagreements:
+    sorted_df = all_trajectories_df.sort_values(['importance'], ascending=False)
+    summary_states = []
+    for index, row in sorted_df.iterrows():
+        state_index = row['state']
+        index_in_summary = bisect(summary_states, state_index)
+        state_before = None
+        state_after = None
+        if index_in_summary > 0:
+            state_before = summary_states[index_in_summary - 1]
+        if index_in_summary < len(summary_states):
+            state_after = summary_states[index_in_summary]
+        if state_after is not None:
+            if state_index[0] == state_after[0]:
+                if state_index[1] + context_length + minimum_gap > state_after[1]:
+                    continue
+        if state_before is not None:
+            if state_index[0] == state_before[0]:
+                if state_index[1] - context_length - minimum_gap < state_before[1]:
+                    continue
+        insort_left(summary_states, state_index)
+        if len(summary_states) == budget:
             break
 
-    if not len(top_k_diverse_trajectories) == args.n_disagreements:
-        top_k_diverse_trajectories += discarded_context
-    top_k_diverse_trajectories = top_k_diverse_trajectories[:args.n_disagreements]
-
-    log(args.logger, f'Chosen disagreements:', args.verbose)
-    for d in top_k_diverse_trajectories:
-        log(args.logger, f'Name: ({d.episode},{d.da_index})')
-
+    top_k_diverse_trajectories = []
+    for state in summary_states:
+        row = all_trajectories_df.loc[all_trajectories_df['state'] == state]
+        top_k_diverse_trajectories.append(row['trajectory'].item())
     return top_k_diverse_trajectories
 
 
